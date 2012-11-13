@@ -115,69 +115,67 @@ int max_element(vector<int>& activelist)
     return max;
 }
 //-----------------------------------------------------------------------------------------------//
-void coaltree(vector<int>& activelist, double theta, double& time, xorshift64& myrand1, vector<nodestruct>& nodeVector)
+void coaltree(vector<int>& activelist, double theta, double time,
+	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
 {
-    int random1, random2;
+    double T = 0.0;
+	int random1, random2;
     double Z = myrand1.get_double52();
-
-// REED: What happens if activelist.size() == 1 or 0 ????
-// KAILEY: activelist never enters this function if its size is 1 or 0; no longer needs to coalesce
 	
-    random1 = (myrand1.get_uint32()% activelist.size());
-    do {
-        random2 = (myrand1.get_uint32()% activelist.size());
-    } while(random1==random2);
+	int size = activelist.size();  
 
-// REED: move this up so you can use it earlier.	
-    int size = activelist.size();
-    double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
-    double U = (-log(Z))*mean;
-    time+=U;
+	//store copy of activelist, which ones are initial tips
+	//need vector of doubles that save their times
+	//reset all their times to 0
 
-// REED: Why do we do this?
-// KAILEY: We were told to order the nodes in previous versions, for organization's sake
-    if (activelist[random1]>activelist[random2]) {															//orders two nodes minimum to maximum
-        swap(activelist[random1],activelist[random2]);
-    }
+	while(size>1)
+	{
+		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
+		double U = (-log(Z))*mean;
+		if(T+U>time)
+		{
+			break;
+		}
+		T+=U;
 
-// REED: This has to be changed.  It is not a reliable way anymore to identify the parent
-//       It is better to use nodeVector.size() followed by a nodeVector.push_back().
-//       Of course this means that nodeVector cannot be made full size ahead of time.
-    int newparent = max_element(activelist) + 1;
+		random1 = (myrand1.get_uint32()% size);
+		do {
+			random2 = (myrand1.get_uint32()% size);
+		} while(random1==random2);
+		
+		if (random1>random2) 															//orders two nodes minimum to maximum
+			swap(random1,random2);
 
-    nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
-    nodeVector[newparent].child_2 = activelist[random2];
-    nodeVector[newparent].time = time;
+		int newparent = nodeVector.size();
+		nodeVector.push_back(nodestruct());
 
-    nodeVector[activelist[random1]].parent = newparent;                         //update child nodes
-    nodeVector[activelist[random2]].parent = newparent;
+		nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
+		nodeVector[newparent].child_2 = activelist[random2];
+		nodeVector[newparent].time = T;
 
-    /*
-    cout << "New Parent: " << newparent << endl;
-
-    cout << "child 1: " << nodeVector[newparent].child_1 << endl;                        //update parent node
-    cout << "child 2: " << nodeVector[newparent].child_2 << endl;
-    cout << "time: " << nodeVector[newparent].time << endl;
-
-    cout << "parent: " << nodeVector[activelist[random1]].parent << endl;                //update child nodes
-    cout << "parent: " << nodeVector[activelist[random2]].parent << endl;
-
-    cout << "Active random1: " << activelist[random1] << endl;                           //update active vector
-    */
-    activelist[random1] = newparent;													 //update active vector
-    activelist.erase (activelist.begin() + random2);
+		nodeVector[activelist[random1]].parent = newparent;                         //update child nodes
+		nodeVector[activelist[random2]].parent = newparent;
+		nodeVector[activelist[random1]].time = T - nodeVector[activelist[random1]].time;
+		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
+		
+		activelist[random1] = newparent;													 //update active vector
+		activelist.erase (activelist.begin() + random2);
+		size--;
+	} 
+	for(int i=0; i<size; i++)
+	{
+		nodeVector[activelist[i]].time = time - nodeVector[activelist[i]].time;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------//
 
 int main(int argc, char *argv[])														 //receive inputs
 {
-    int N1, N2, n, N, B, trees, N1a, N2a;
+    int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
 
-//REED: No Input validation is begin done.
-//KAILEY: Are there specific bounds for any of these parameters?
-
+//fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
 			while(trees<1)
@@ -247,28 +245,10 @@ int main(int argc, char *argv[])														 //receive inputs
         return EXIT_FAILURE;
     }
 
-//REED: Some of these are not needed, I think.
     n = N1+N2;																		//n=total original tips from both species
     N = 2*n-1;                                                                      //N = total # of nodes
     mean = 2.0/(n*(n-1));                                                           //calculate mean
-    B = N-n;                                                                        //B = # of additional nodes created
-    N1a=N1;
-    N2a=N2;
-
-//REED: These need to be inside your loop.	
-    vector<int> active1(N1);			//initialize active list for species 1
-    for(int i=0; i<N1; i++)
-    {
-        active1[i]=i;
-    }
-
-
-    vector<int> active2(N2);			//initialize active list for species 2
-    int k=0;
-    for(int j=2*N1-1; j<(2*N1-1)+N2; j++)
-    {   active2[k]=j;
-        k++;
-    }
+    
 
     xorshift64 myrand;																//use xorshift64 class for random number generator
     myrand.seed(create_random_seed());
@@ -281,70 +261,37 @@ int main(int argc, char *argv[])														 //receive inputs
     for(int repeat=0; repeat<trees; repeat++) {                                     //loops once for each tree
         vector<nodestruct> nodevector(N);                                           //create nodevector (vector of structs)
 
-//----------------------------------------------------------------------------//
-        const char* const genetype = "ATCG" ;                                       //generate inital nucleotide values
-        unsigned int u = myrand.get_uint32();
-        int G = u % 4;
-	// REED: This entire initialization is off with respect to the new algorithm.
-	//       Easier to write a function that will add X tips on to the node vector.
-	//       And call it before you each coalsim.
-        for (int i = 0; i < N; ++i) {                                               //define contents of each node
-            char L = genetype[G];
+		
+		vector<int> active1(N1);			//initialize active list for species 1
+		for(int i=0; i<N1; i++)
+		{
+			active1[i]=i;
+			nodevector[i].child_1=-1;
+			nodevector[i].child_2=-1;
+			nodevector[i].parent=-1;
+			nodevector[i].label='N';
+			nodevector[i].time=0;
+		}
 
-            nodestruct NODE_i;
-            NODE_i.child_1 = -1;
-            NODE_i.child_2 = -1;
-            NODE_i.parent  = -1;
-            NODE_i.label   =  L;
-            NODE_i.time    =  0;
 
-            if(i<N1)
-                NODE_i.type= '1';
-            else if (i<(N1+N2) && i>=N1)
-                NODE_i.type= '2';
-            else
-                NODE_i.type ='3';
-            nodevector.push_back(NODE_i);                                               //add struct to nodevector
-        }                                                                               //close for loop
-
+		vector<int> active2(N2);			//initialize active list for species 2
+		for(int j=N1; j<N1+N2; j++)
+		{   
+			active2[j-N1]=j;
+			nodevector[j].child_1=-1;
+			nodevector[j].child_2=-1;
+			nodevector[j].parent=-1;
+			nodevector[j].label='N';
+			nodevector[j].time=0;
+		}
 //----------------------------------------------------------------------------//
 
         double t=0.0, tN1=0.0, tN2=0.0, var=0.0;
 
-        vector<int> nodes(2*n-1); 													//n is number of initial nodes
-
-//REED: This does nothing.
-        struct nodestruct {                                                             //create node structure
-            int child_1;
-            int child_2;
-            int parent;
-            char label;
-            char type;
-            double time;
-        };
-
-//REED: This while loop needs to go inside the coaltree function.		
-        while(active1.size()>1 && tN1<t1)
-        {
-            coaltree(active1, theta1, tN1, myrand, nodevector);
-            /*cout<<"species 1 "<<endl;
-            for(int f=0; f<active1.size(); f++)
-            {	cout<<active1[f]<<" ";
-            }
-            cout<<endl;
-            */
-        }
-
-        while(active2.size()>1 && tN2<t2)
-        {
-            coaltree(active2, theta2, tN2, myrand, nodevector);
-            /*cout<<"species 2"<<endl;
-            for(int f=0; f<active2.size(); f++)
-            {	cout<<active2[f]<<" ";
-            }
-            cout<<endl;
-            */
-        }
+        vector<int> nodes(2*n-1); 													//n is number of initial nodes	
+       
+		coaltree(active1, theta1, t1, nodevector, myrand);
+		coaltree(active2, theta2, t2, nodevector, myrand);
 
         vector<int> active3(active1.size() + active2.size());
 
@@ -372,7 +319,6 @@ int main(int argc, char *argv[])														 //receive inputs
 
 //REED: Once you create the tree, it shouldn't matter what population the nodes came from.		
         for (int i = N - 1; i > B; --i) {                                               //start mutations for loop
-            //B = N - n (# of nodes generated)
             double T1 = nodevector[i].time;                                              //time @ current node
             double T2 = nodevector[nodevector[i].child_1].time;                          //time @ child 1
             double T3 = nodevector[nodevector[i].child_2].time;			                //time @ child 2
