@@ -164,7 +164,7 @@ void coaltree(vector<int>& activelist, double theta, double time,
 	} 
 	for(int i=0; i<size; i++)
 	{
-		nodeVector[activelist[i]].time = T - nodeVector[activelist[i]].time;
+		nodeVector[activelist[i]].time = time - nodeVector[activelist[i]].time;
 	}
 }
 
@@ -172,7 +172,7 @@ void coaltree(vector<int>& activelist, double theta, double time,
 
 int main(int argc, char *argv[])														 //receive inputs
 {
-    int N1, N2, n, N, B, trees, N1a, N2a;
+    int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
 
 //fix input validation
@@ -245,15 +245,10 @@ int main(int argc, char *argv[])														 //receive inputs
         return EXIT_FAILURE;
     }
 
-//REED: Some of these are not needed, I think.
     n = N1+N2;																		//n=total original tips from both species
     N = 2*n-1;                                                                      //N = total # of nodes
     mean = 2.0/(n*(n-1));                                                           //calculate mean
-    B = N-n;                                                                        //B = # of additional nodes created
-    N1a=N1;
-    N2a=N2;
-
-
+    
 
     xorshift64 myrand;																//use xorshift64 class for random number generator
     myrand.seed(create_random_seed());
@@ -280,7 +275,6 @@ int main(int argc, char *argv[])														 //receive inputs
 
 
 		vector<int> active2(N2);			//initialize active list for species 2
-		
 		for(int j=N1; j<N1+N2; j++)
 		{   
 			active2[j-N1]=j;
@@ -294,9 +288,7 @@ int main(int argc, char *argv[])														 //receive inputs
 
         double t=0.0, tN1=0.0, tN2=0.0, var=0.0;
 
-        vector<int> nodes(2*n-1); 													//n is number of initial nodes
-
-//REED: This while loop needs to go inside the coaltree function.		
+        vector<int> nodes(2*n-1); 													//n is number of initial nodes	
        
 		coaltree(active1, theta1, t1, nodevector, myrand);
 		coaltree(active2, theta2, t2, nodevector, myrand);
@@ -327,7 +319,6 @@ int main(int argc, char *argv[])														 //receive inputs
 
 //REED: Once you create the tree, it shouldn't matter what population the nodes came from.		
         for (int i = N - 1; i > B; --i) {                                               //start mutations for loop
-            //B = N - n (# of nodes generated)
             double T1 = nodevector[i].time;                                              //time @ current node
             double T2 = nodevector[nodevector[i].child_1].time;                          //time @ child 1
             double T3 = nodevector[nodevector[i].child_2].time;			                //time @ child 2
