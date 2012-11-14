@@ -166,7 +166,7 @@ void coaltree(vector<int>& activelist, double theta, double time,
 
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 	{
-		nodeVector[activelist[i]].time = T - nodeVector[activelist[i]].time;
+		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
 	}
 
 	for(int i=0; i<activelist.size() && time!=DBL_MAX; i++)
