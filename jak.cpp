@@ -124,10 +124,6 @@ void coaltree(vector<int>& activelist, double theta, double time,
 	
 	int size = activelist.size();  
 
-	//store copy of activelist, which ones are initial tips
-	//need vector of doubles that save their times
-	//reset all their times to 0
-
 	while(size>1)
 	{
 		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
@@ -164,7 +160,7 @@ void coaltree(vector<int>& activelist, double theta, double time,
 	} 
 	for(int i=0; i<size; i++)
 	{
-		nodeVector[activelist[i]].time = time - nodeVector[activelist[i]].time;
+		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
 	}
 }
 
