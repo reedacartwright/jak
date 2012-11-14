@@ -45,10 +45,10 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
-            temp += "(" + node_str[v[i].child_1] + "_" + v[v[i].child_1].type  + "_"+ convert_node1 + ":";
-            sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + v[v[i].child_2].type  + "_" + convert_node2+ ":";
-            sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
+            temp += "(" + node_str[v[i].child_1] +/* "_" + v[v[i].child_1].type  + "_" +*/ convert_node1 + ":";
+            sprintf(buffer, "%0.6f", v[i].time);
+            temp += string(buffer) + "," + node_str[v[i].child_2] + /*"_" + v[v[i].child_2].type  + "_" + */convert_node2+ ":";
+            sprintf(buffer, "%0.6f", v[i].time);
             temp += string(buffer) + ")";
         }
         temp += v[i].label;
@@ -163,12 +163,13 @@ void coaltree(vector<int>& activelist, double theta, double time,
 		activelist.erase (activelist.begin() + random2);
 		size--;
 	}
+
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 	{
-		nodeVector[activelist[i]].time = time - nodeVector[activelist[i]].time;
+		nodeVector[activelist[i]].time = T - nodeVector[activelist[i]].time;
 	}
 
-	for(int i=0; i<activelist.size(); i++)
+	for(int i=0; i<activelist.size() && time!=DBL_MAX; i++)
 	{
 		times_saved.push_back(double());
 		times_saved[i]=nodeVector[activelist[i]].time;
@@ -191,8 +192,7 @@ int main(int argc, char *argv[])														 //receive inputs
 {
     int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
-	vector<double> new_times1;
-	vector<double> new_times2;
+	vector<double> new_times;
 	vector<int> active_copy;
 
 //fix input validation
@@ -304,15 +304,11 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[j].label='N';
 			nodevector[j].time=0;
 		}
+
 //----------------------------------------------------------------------------//
-
-        double t=0.0, tN1=0.0, tN2=0.0, var=0.0;
-
-        vector<int> nodes(2*n-1); 													//n is number of initial nodes
-
-		coaltree(active1, theta1, t1, nodevector, myrand, new_times1, active_copy);
-		coaltree(active2, theta2, t2, nodevector, myrand, new_times2, active_copy);
-		//coaltree(active_copy, theta3, DBL_MAX, nodevector, myrand, new_times, active_copy);
+		coaltree(active1, theta1, t1, nodevector, myrand, new_times, active_copy);
+		coaltree(active2, theta2, t2, nodevector, myrand, new_times, active_copy);
+		coaltree(active_copy, theta3, DBL_MAX, nodevector, myrand, new_times, active_copy);
 		//vector<int> active3(active1.size() + active2.size());
 
         //active1.insert(active1.end(), active2.begin(), active2.end());
@@ -349,8 +345,6 @@ int main(int argc, char *argv[])														 //receive inputs
         //int dtotal = d + d1;
         //cout << "Number of mutations: " << dtotal << endl;
 
-        total_tree=total_tree+t;
-
     }                                                                               //end # of trees loop
     myfile.close();
 
@@ -359,11 +353,11 @@ int main(int argc, char *argv[])														 //receive inputs
     cout<<"Random seed used: "<<create_random_seed()<<endl;
 
 //REED: Use this instead.
-    /*cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-    */
-    cin.ignore();
+    
+    //cin.ignore();
 
     return EXIT_SUCCESS;
 }
