@@ -1,6 +1,6 @@
 // jak.cpp
 
-#include "stdafx.h"
+//#include "stdafx.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -82,27 +82,28 @@ inline unsigned int create_random_seed() {															//random seed generator
 
 
 //-----------------------------------------------------------------------------//
-void set_mutations(xorshift64 myrand1, int G, double& m, double branchA, double branchB, int& m_counter, char& label)
+void set_mutations(xorshift64 &myrand1, char &G, double time, int& m_counter)
 {   double mutations[4][4]={
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0}
     };
-
+    double m = 0.0;
     m = m - log(myrand1.get_double52());                                            //m = total distance travelled along branch length
-    if (m <= branchA - branchB) {                                                   //if m < branch length --> mutate
+    while (m <= time) {                                                                //if m < branch length --> mutate
         m_counter = m_counter + 1;                                                  //muation counter
+        double rand3=myrand1.get_double52();
+        if (rand3<=mutations[G][0])
+            G = 0;
+        else if (rand3<=mutations[G][1])
+            G = 1;
+        else if (rand3<=mutations[G][2])
+            G = 2;
+        else if (rand3<=mutations[G][3])
+            G = 3;
+        m = m - log(myrand1.get_double52());
     }
-    double rand3=myrand1.get_double52();
-    if (rand3<=mutations[G][0])
-        label='A';
-    else if (rand3<=mutations[G][1])
-        label='T';
-    else if (rand3<=mutations[G][2])
-        label='C';
-    else if (rand3<=mutations[G][3])
-        label='G';
 }
 //-----------------------------------------------------------------------------------------------//
 
@@ -358,31 +359,29 @@ int main(int argc, char *argv[])														 //receive inputs
         active1.insert(active1.end(), active2.begin(), active2.end());
         coaltree(active1, theta3, DBL_MAX, 3, nodevector, myrand);
 
-/*
+
 //----------------------------------------------------------------------------////mutations
         char L1;
         int d  = 0;                                                                     //mutation counters
         int d1 = 0;
 
 //REED: Once you create the tree, it shouldn't matter what population the nodes came from.
-        for (int i = N - 1; i > B; --i) {                                               //start mutations for loop
-            double T1 = nodevector[i].time;                                              //time @ current node
-            double T2 = nodevector[nodevector[i].child_1].time;                          //time @ child 1
-            double T3 = nodevector[nodevector[i].child_2].time;			                //time @ child 2
-            double m = 0.0;                                                              //initialize/reset m
-//node i child 1
-            while (T1 - m >= T2) {                                                      //branch between current node and child_1
-                set_mutations(myrand, G, m, T1, T2, d, L1);
-            }                                                                           //close while loop (node i child 1)
-// node i child 2
-            m = 0.0;                                                                    //reset m = 0
-            while (T1 - m >= T3) {                                                      //branch between current node and child_2
-                set_mutations(myrand, G, m, T1, T3, d1, L1);
-                nodevector[i].label = L1;												//store mutated gene as nodevector[i].label
-            }                                                                           //close while loop (child 2)
-        }                                                                               //end mutations for loop
+        nodevector.back().label = 0;
+        for (int i = nodevector.size() - 2; i >= 0; --i) {                                               //start mutations for loop
+
+            int counter = 0;
+
+            nodevector[i].label = nodevector[nodevector[i].parent].label;
+
+            set_mutations (myrand, nodevector[i].label, nodevector[i].time, counter);
+        }
+        for (int i=0; i < nodevector.size(); i++){
+            char s[] = "ATCG";
+            nodevector[i].label = s[nodevector[i].label];
+        }
+                                                                                   //end mutations for loop
 //----------------------------------------------------------------------------//
-*/
+
         cout << "Newick tree: " << repeat+1<< endl;
         cout << tree_to_string(nodevector) << endl;                                 //print newick tree to console
         myfile << tree_to_string(nodevector)<< " \n";                               //print newick tree to file
