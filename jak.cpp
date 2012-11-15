@@ -45,10 +45,12 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
-            temp += "(" + node_str[v[i].child_1] +/* "_" + v[v[i].child_1].type  + "_" +*/ convert_node1 + ":";
-            sprintf(buffer, "%0.6f", v[i].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + /*"_" + v[v[i].child_2].type  + "_" + */convert_node2+ ":";
-            sprintf(buffer, "%0.6f", v[i].time);
+            temp += "(" + node_str[v[i].child_1] + "_" + v[v[i].child_1].type  + "_"+ convert_node1 + ":";
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + v[v[i].child_2].type  + "_" + convert_node2+ ":";
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
             temp += string(buffer) + ")";
         }
         temp += v[i].label;
@@ -115,13 +117,13 @@ int max_element(vector<int>& activelist)
     return max;
 }
 //-----------------------------------------------------------------------------------------------//
-void coaltree(vector<int>& activelist, double theta, double time,
-	          vector<nodestruct>& nodeVector, xorshift64& myrand1,
-			  vector<double>& times_saved, vector<int>& copyactive)
+void coaltree(vector<int>& activelist, double theta, double time, int type,
+	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
 {
     double T = 0.0;
+    int i = 0;
 	int random1, random2;
-    double Z = myrand1.get_double52();
+    //double Z = myrand1.get_double52();
 
 	int size = activelist.size();
 
@@ -131,13 +133,23 @@ void coaltree(vector<int>& activelist, double theta, double time,
 
 	while(size>1)
 	{
+	    cout << endl;
+	    for (i=0; i<activelist.size(); i++)
+		{
+		    cout << " " << activelist[i];
+		}
+		cout << endl;
+
+        double Z = myrand1.get_double52();
 		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
 		double U = (-log(Z))*mean;
+		cout << " U is : " << U << endl;
 		if(T+U>time)
 		{
 			break;
 		}
 		T+=U;
+		cout <<"counter Time (T) is: " << T << endl;
 
 		random1 = (myrand1.get_uint32()% size);
 		do {
@@ -147,43 +159,70 @@ void coaltree(vector<int>& activelist, double theta, double time,
 		if (random1>random2) 															//orders two nodes minimum to maximum
 			swap(random1,random2);
 
+        cout << "coalescing nodes are: " << random1 << " " << random2 << endl;
+
 		int newparent = nodeVector.size();
 		nodeVector.push_back(nodestruct());
 
-		nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
-		nodeVector[newparent].child_2 = activelist[random2];
-		nodeVector[newparent].time = T;
 
-		nodeVector[activelist[random1]].parent = newparent;                         //update child nodes
+		nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
+		cout << " nodeVector[newparent].child_1 is : " << nodeVector[newparent].child_1 << endl;
+
+		nodeVector[newparent].child_2 = activelist[random2];
+		cout << " nodeVector[newparent].child_2 is : " << nodeVector[newparent].child_2 << endl;
+
+		nodeVector[newparent].time = T;
+        cout << " nodeVector[newparent].time : " << nodeVector[newparent].time << endl;
+
+		nodeVector[activelist[random1]].parent = newparent;                                //update child nodes
+		cout << " nodeVector[activelist[random1]].parent : " << nodeVector[activelist[random1]].parent << endl;
+
 		nodeVector[activelist[random2]].parent = newparent;
+		cout << " nodeVector[activelist[random2]].parent : " << nodeVector[activelist[random2]].parent << endl;
+
+        cout << " before nodeVector[activelist[random1]].time : " << nodeVector[activelist[random1]].time << endl;
 		nodeVector[activelist[random1]].time = T - nodeVector[activelist[random1]].time;
+		cout << " after nodeVector[activelist[random1]].time : " << nodeVector[activelist[random1]].time << endl;
+
+        cout << " before nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
 		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
+		cout << " after nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
+
+		if (type==1)
+		{
+            nodeVector[activelist[random1]].type = '1';
+            nodeVector[activelist[random2]].type = '1';
+		}
+		else if (type==2)
+		{
+            nodeVector[activelist[random1]].type = '2';
+            nodeVector[activelist[random2]].type = '2';
+		}
+		else
+		{
+            nodeVector[activelist[random1]].type = '3';
+            nodeVector[activelist[random2]].type = '3';
+		}
 
 		activelist[random1] = newparent;													 //update active vector
 		activelist.erase (activelist.begin() + random2);
+		cout << "active list is: " << endl;
+
+		for (i=0; i<activelist.size(); i++)
+		{
+		    cout << " " << activelist[i];
+		}
+		cout << endl;
+		cout << endl;
 		size--;
 	}
 
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 	{
 		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
+		cout << " nodeVector[activelist[i]].time : " << nodeVector[activelist[i]].time << endl;
 	}
 
-	for(int i=0; i<activelist.size() && time!=DBL_MAX; i++)
-	{
-		times_saved.push_back(double());
-		times_saved[i]=nodeVector[activelist[i]].time;
-		copyactive.push_back(int());
-		copyactive[i]= activelist[i];
-	}
-
-	if(time==DBL_MAX)
-	{
-		for(int i=0; i<activelist.size(); i++)
-		{
-			nodeVector[copyactive[i]].time = times_saved[i];
-		}
-	}
 }
 
 //-------------------------------------------------------------------------------------------------//
@@ -192,8 +231,7 @@ int main(int argc, char *argv[])														 //receive inputs
 {
     int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
-	vector<double> new_times;
-	vector<int> active_copy;
+
 
 //fix input validation
     if (argc == 9) {
@@ -276,10 +314,10 @@ int main(int argc, char *argv[])														 //receive inputs
 
 	//REED: What is this for?  It is going to fail on all systems but Kailey's
     ofstream myfile;                                                                //file
-    myfile.open ("C://Users//Kailey//Documents//MATLAB//newickstruct_data.txt");    //open file
+    myfile.open ("C://Users//Kailey//Documents//MATLAB//newickstruct_data.txt");     //open file
 
     for(int repeat=0; repeat<trees; repeat++) {                                     //loops once for each tree
-        vector<nodestruct> nodevector(N);                                           //create nodevector (vector of structs)
+        vector<nodestruct> nodevector(n);                                           //create nodevector (vector of structs)
 
 
 		vector<int> active1(N1);			//initialize active list for species 1
@@ -291,6 +329,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[i].parent=-1;
 			nodevector[i].label='N';
 			nodevector[i].time=0;
+			nodevector[i].type='0';
 		}
 
 
@@ -303,16 +342,21 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[j].parent=-1;
 			nodevector[j].label='N';
 			nodevector[j].time=0;
+			nodevector[j].type='0';
 		}
 
+		cout << "size of nodevector is: " << nodevector.size() << endl;
 //----------------------------------------------------------------------------//
-		coaltree(active1, theta1, t1, nodevector, myrand, new_times, active_copy);
-		coaltree(active2, theta2, t2, nodevector, myrand, new_times, active_copy);
-		coaltree(active_copy, theta3, DBL_MAX, nodevector, myrand, new_times, active_copy);
-		//vector<int> active3(active1.size() + active2.size());
 
-        //active1.insert(active1.end(), active2.begin(), active2.end());
+        double t=0.0;
 
+        vector<int> nodes(2*n-1); 													//n is number of initial nodes
+
+		coaltree(active1, theta1, t1, 1, nodevector, myrand);
+		coaltree(active2, theta2, t2, 2, nodevector, myrand);
+
+        active1.insert(active1.end(), active2.begin(), active2.end());
+        coaltree(active1, theta3, DBL_MAX, 3, nodevector, myrand);
 
 /*
 //----------------------------------------------------------------------------////mutations
@@ -345,6 +389,8 @@ int main(int argc, char *argv[])														 //receive inputs
         //int dtotal = d + d1;
         //cout << "Number of mutations: " << dtotal << endl;
 
+        total_tree=total_tree+t;
+
     }                                                                               //end # of trees loop
     myfile.close();
 
@@ -353,11 +399,11 @@ int main(int argc, char *argv[])														 //receive inputs
     cout<<"Random seed used: "<<create_random_seed()<<endl;
 
 //REED: Use this instead.
-    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+    /*cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-    
-    //cin.ignore();
+    */
+    cin.ignore();
 
     return EXIT_SUCCESS;
 }
