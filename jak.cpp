@@ -1,6 +1,12 @@
 // jak.cpp
 
-//#include "stdafx.h"
+#ifdef _MSC_VER
+#	include <process.h>
+#	define getpid _getpid
+#else
+#	include <unistd.h>
+#endif
+
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -13,9 +19,6 @@
 #include <float.h>
 #include <fstream>
 #include "xorshift64.h"
-#include <process.h>
-
-
 
 using namespace std;
 //----------------------------------------------------------------------------//
@@ -61,7 +64,7 @@ string tree_to_string(const vector<nodestruct>& v) {                            
 //----------------------------------------------------------------------------//
 //REED: use gidpid instead of _getpid for portability to other operating systems.
 //      on windows use _getpid via a define
-#ifdef WIN32
+#ifdef _MSC_VER
 #	define getpid _getpid
 #endif
 inline unsigned int create_random_seed() {															//random seed generator
@@ -76,7 +79,7 @@ inline unsigned int create_random_seed() {															//random seed generator
     v^=(v<<5);
     return (v == 0) ? 0x6a27d958 : (v & 0x7FFFFFFF); // return at most a 31-bit seed
 }
-#ifdef WIN32
+#ifdef _MSC_VER
 #	undef getpid
 #endif
 
@@ -217,10 +220,7 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 	{
 		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
-<<<<<<< HEAD
 		cout << " nodeVector[activelist[i]].time : " << nodeVector[activelist[i]].time << endl;
-=======
->>>>>>> bce31d4fb9cc8550db94263c02e3b29687fe37cb
 	}
 
 }
@@ -297,9 +297,12 @@ int main(int argc, char *argv[])														 //receive inputs
     }
 
     else {
-        cout << "error, must have format: prg name, trees, # of tips for first species, # of tips for second species, theta1, theta2, theta3, t1, t2" << endl;
-//REED: system("PAUSE") does not work outside of windows.  See below for a better solution using cin.ignore
-        system("PAUSE");
+        cout << "error, must have format: prg name, trees, # of tips for first"
+                "species, # of tips for second species, theta1, theta2,"
+                "theta3, t1, t2" << endl;
+		cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+		cout << "Press ENTER to quit.";
+		cin.ignore( numeric_limits<streamsize>::max(), '\n' );
         return EXIT_FAILURE;
     }
 
@@ -396,12 +399,9 @@ int main(int argc, char *argv[])														 //receive inputs
 
     cout<<"Random seed used: "<<create_random_seed()<<endl;
 
-//REED: Use this instead.
-    /*cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-    */
-    cin.ignore();
 
     return EXIT_SUCCESS;
 }
