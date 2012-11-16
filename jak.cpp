@@ -28,7 +28,7 @@ struct nodestruct {                                                             
     int parent;
     char label;                                                                //gene
     double time;
-    char type;                                                                 //species
+    int type;                                                                 //species
 };
 //----------------------------------------------------------------------------//
 string convert(int x)					//Function to convert int type to string
@@ -48,10 +48,10 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
-            temp += "(" + node_str[v[i].child_1] + "_" + v[v[i].child_1].type  + "_"+ convert_node1 + ":";
+            temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
             sprintf(buffer, "%0.6f", v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + v[v[i].child_2].type  + "_" + convert_node2+ ":";
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
             sprintf(buffer, "%0.6f", v[v[i].child_2].time);
             temp += string(buffer) + ")";
@@ -163,7 +163,8 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 
 		int newparent = nodeVector.size();
 		nodeVector.push_back(nodestruct());
-
+		
+		nodeVector[newparent].type = type;
 
 		nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
 		cout << " nodeVector[newparent].child_1 is : " << nodeVector[newparent].child_1 << endl;
@@ -188,23 +189,7 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
 		cout << " after nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
 
-		if (type==1)
-		{
-            nodeVector[activelist[random1]].type = '1';
-            nodeVector[activelist[random2]].type = '1';
-		}
-		else if (type==2)
-		{
-            nodeVector[activelist[random1]].type = '2';
-            nodeVector[activelist[random2]].type = '2';
-		}
-		else
-		{
-            nodeVector[activelist[random1]].type = '3';
-            nodeVector[activelist[random2]].type = '3';
-		}
-
-		activelist[random1] = newparent;													 //update active vector
+		activelist[random1] = newparent;												 //update active vector
 		activelist.erase (activelist.begin() + random2);
 		cout << "active list is: " << endl;
 
@@ -332,7 +317,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[i].parent=-1;
 			nodevector[i].label='N';
 			nodevector[i].time=0;
-			nodevector[i].type='0';
+			nodevector[i].type=1;
 		}
 
 
@@ -345,7 +330,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[j].parent=-1;
 			nodevector[j].label='N';
 			nodevector[j].time=0;
-			nodevector[j].type='0';
+			nodevector[j].type=2;
 		}
 
 		cout << "size of nodevector is: " << nodevector.size() << endl;
