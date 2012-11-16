@@ -128,10 +128,6 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 
 	int size = activelist.size();
 
-	//store copy of activelist, which ones are initial tips
-	//need vector of doubles that save their times
-	//reset all their times to 0
-
 	while(size>1)
 	{
 	    cout << endl;
@@ -221,7 +217,10 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 	{
 		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
+<<<<<<< HEAD
 		cout << " nodeVector[activelist[i]].time : " << nodeVector[activelist[i]].time << endl;
+=======
+>>>>>>> bce31d4fb9cc8550db94263c02e3b29687fe37cb
 	}
 
 }
