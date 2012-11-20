@@ -399,11 +399,11 @@ int main(int argc, char *argv[])														 //receive inputs
     cout<<"Random seed used: "<<create_random_seed()<<endl;
 
 //REED: Use this instead.
-    /*cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-    */
-    cin.ignore();
+    
+    //cin.ignore();
 
     return EXIT_SUCCESS;
 }
