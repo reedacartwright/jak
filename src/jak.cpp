@@ -1,6 +1,12 @@
 // jak.cpp
 
-#include "stdafx.h"
+#ifdef _MSC_VER
+#	include <process.h>
+#	define getpid _getpid
+#else
+#	include <unistd.h>
+#endif
+
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -13,9 +19,6 @@
 #include <float.h>
 #include <fstream>
 #include "xorshift64.h"
-#include <process.h>
-
-
 
 using namespace std;
 //----------------------------------------------------------------------------//
@@ -25,7 +28,7 @@ struct nodestruct {                                                             
     int parent;
     char label;                                                                //gene
     double time;
-    char type;                                                                 //species
+    int type;                                                                 //species
 };
 //----------------------------------------------------------------------------//
 string convert(int x)					//Function to convert int type to string
@@ -45,10 +48,10 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
-            temp += "(" + node_str[v[i].child_1] + "_" + v[v[i].child_1].type  + "_"+ convert_node1 + ":";
+            temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
             sprintf(buffer, "%0.6f", v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + v[v[i].child_2].type  + "_" + convert_node2+ ":";
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
             sprintf(buffer, "%0.6f", v[v[i].child_2].time);
             temp += string(buffer) + ")";
@@ -61,7 +64,7 @@ string tree_to_string(const vector<nodestruct>& v) {                            
 //----------------------------------------------------------------------------//
 //REED: use gidpid instead of _getpid for portability to other operating systems.
 //      on windows use _getpid via a define
-#ifdef WIN32
+#ifdef _MSC_VER
 #	define getpid _getpid
 #endif
 inline unsigned int create_random_seed() {															//random seed generator
@@ -76,33 +79,34 @@ inline unsigned int create_random_seed() {															//random seed generator
     v^=(v<<5);
     return (v == 0) ? 0x6a27d958 : (v & 0x7FFFFFFF); // return at most a 31-bit seed
 }
-#ifdef WIN32
+#ifdef _MSC_VER
 #	undef getpid
 #endif
 
 
 //-----------------------------------------------------------------------------//
-void set_mutations(xorshift64 myrand1, int G, double& m, double branchA, double branchB, int& m_counter, char& label)
+void set_mutations(xorshift64 &myrand1, char &G, double time, int& m_counter)
 {   double mutations[4][4]={
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0}
     };
-
+    double m = 0.0;
     m = m - log(myrand1.get_double52());                                            //m = total distance travelled along branch length
-    if (m <= branchA - branchB) {                                                   //if m < branch length --> mutate
+    while (m <= time) {                                                                //if m < branch length --> mutate
         m_counter = m_counter + 1;                                                  //muation counter
+        double rand3=myrand1.get_double52();
+        if (rand3<=mutations[G][0])
+            G = 0;
+        else if (rand3<=mutations[G][1])
+            G = 1;
+        else if (rand3<=mutations[G][2])
+            G = 2;
+        else if (rand3<=mutations[G][3])
+            G = 3;
+        m = m - log(myrand1.get_double52());
     }
-    double rand3=myrand1.get_double52();
-    if (rand3<=mutations[G][0])
-        label='A';
-    else if (rand3<=mutations[G][1])
-        label='T';
-    else if (rand3<=mutations[G][2])
-        label='C';
-    else if (rand3<=mutations[G][3])
-        label='G';
 }
 //-----------------------------------------------------------------------------------------------//
 
@@ -126,10 +130,6 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
     //double Z = myrand1.get_double52();
 
 	int size = activelist.size();
-
-	//store copy of activelist, which ones are initial tips
-	//need vector of doubles that save their times
-	//reset all their times to 0
 
 	while(size>1)
 	{
@@ -163,7 +163,8 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 
 		int newparent = nodeVector.size();
 		nodeVector.push_back(nodestruct());
-
+		
+		nodeVector[newparent].type = type;
 
 		nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
 		cout << " nodeVector[newparent].child_1 is : " << nodeVector[newparent].child_1 << endl;
@@ -188,23 +189,7 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
 		cout << " after nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
 
-		if (type==1)
-		{
-            nodeVector[activelist[random1]].type = '1';
-            nodeVector[activelist[random2]].type = '1';
-		}
-		else if (type==2)
-		{
-            nodeVector[activelist[random1]].type = '2';
-            nodeVector[activelist[random2]].type = '2';
-		}
-		else
-		{
-            nodeVector[activelist[random1]].type = '3';
-            nodeVector[activelist[random2]].type = '3';
-		}
-
-		activelist[random1] = newparent;													 //update active vector
+		activelist[random1] = newparent;												 //update active vector
 		activelist.erase (activelist.begin() + random2);
 		cout << "active list is: " << endl;
 
@@ -297,9 +282,12 @@ int main(int argc, char *argv[])														 //receive inputs
     }
 
     else {
-        cout << "error, must have format: prg name, trees, # of tips for first species, # of tips for second species, theta1, theta2, theta3, t1, t2" << endl;
-//REED: system("PAUSE") does not work outside of windows.  See below for a better solution using cin.ignore
-        system("PAUSE");
+        cout << "error, must have format: prg name, trees, # of tips for first"
+                "species, # of tips for second species, theta1, theta2,"
+                "theta3, t1, t2" << endl;
+		cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+		cout << "Press ENTER to quit.";
+		cin.ignore( numeric_limits<streamsize>::max(), '\n' );
         return EXIT_FAILURE;
     }
 
@@ -329,7 +317,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[i].parent=-1;
 			nodevector[i].label='N';
 			nodevector[i].time=0;
-			nodevector[i].type='0';
+			nodevector[i].type=1;
 		}
 
 
@@ -342,7 +330,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[j].parent=-1;
 			nodevector[j].label='N';
 			nodevector[j].time=0;
-			nodevector[j].type='0';
+			nodevector[j].type=2;
 		}
 
 		cout << "size of nodevector is: " << nodevector.size() << endl;
@@ -358,31 +346,29 @@ int main(int argc, char *argv[])														 //receive inputs
         active1.insert(active1.end(), active2.begin(), active2.end());
         coaltree(active1, theta3, DBL_MAX, 3, nodevector, myrand);
 
-/*
+
 //----------------------------------------------------------------------------////mutations
         char L1;
         int d  = 0;                                                                     //mutation counters
         int d1 = 0;
 
 //REED: Once you create the tree, it shouldn't matter what population the nodes came from.
-        for (int i = N - 1; i > B; --i) {                                               //start mutations for loop
-            double T1 = nodevector[i].time;                                              //time @ current node
-            double T2 = nodevector[nodevector[i].child_1].time;                          //time @ child 1
-            double T3 = nodevector[nodevector[i].child_2].time;			                //time @ child 2
-            double m = 0.0;                                                              //initialize/reset m
-//node i child 1
-            while (T1 - m >= T2) {                                                      //branch between current node and child_1
-                set_mutations(myrand, G, m, T1, T2, d, L1);
-            }                                                                           //close while loop (node i child 1)
-// node i child 2
-            m = 0.0;                                                                    //reset m = 0
-            while (T1 - m >= T3) {                                                      //branch between current node and child_2
-                set_mutations(myrand, G, m, T1, T3, d1, L1);
-                nodevector[i].label = L1;												//store mutated gene as nodevector[i].label
-            }                                                                           //close while loop (child 2)
-        }                                                                               //end mutations for loop
+        nodevector.back().label = 0;
+        for (int i = nodevector.size() - 2; i >= 0; --i) {                                               //start mutations for loop
+
+            int counter = 0;
+
+            nodevector[i].label = nodevector[nodevector[i].parent].label;
+
+            set_mutations (myrand, nodevector[i].label, nodevector[i].time, counter);
+        }
+        for (int i=0; i < nodevector.size(); i++){
+            char s[] = "ATCG";
+            nodevector[i].label = s[nodevector[i].label];
+        }
+                                                                                   //end mutations for loop
 //----------------------------------------------------------------------------//
-*/
+
         cout << "Newick tree: " << repeat+1<< endl;
         cout << tree_to_string(nodevector) << endl;                                 //print newick tree to console
         myfile << tree_to_string(nodevector)<< " \n";                               //print newick tree to file
@@ -398,12 +384,9 @@ int main(int argc, char *argv[])														 //receive inputs
 
     cout<<"Random seed used: "<<create_random_seed()<<endl;
 
-//REED: Use this instead.
-    /*cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-    */
-    cin.ignore();
 
     return EXIT_SUCCESS;
 }
