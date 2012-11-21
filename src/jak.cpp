@@ -28,7 +28,7 @@ struct nodestruct {                                                             
     int parent;
     char label;                                                                //gene
     double time;
-    int type;                                                                 //species
+    char type;                                                                 //species
 };
 //----------------------------------------------------------------------------//
 string convert(int x)					//Function to convert int type to string
@@ -42,16 +42,17 @@ string convert(int x)					//Function to convert int type to string
 string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
     vector<string> node_str(v.size(),"");
     char buffer[16];
+	
     for(int i=0; i<v.size(); i++) {
         string temp = "";
 
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
-            temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
+            temp += "(" + node_str[v[i].child_1] + "_" + (v[v[i].child_1].type) + convert_node1 + ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
             sprintf(buffer, "%0.6f", v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + (v[v[i].child_2].type) + convert_node2+ ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
             sprintf(buffer, "%0.6f", v[v[i].child_2].time);
             temp += string(buffer) + ")";
@@ -59,7 +60,8 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         temp += v[i].label;
         node_str[i] = temp;
     }
-    return node_str.back() + ";";
+	
+	return node_str.back() + ";";
 }
 //----------------------------------------------------------------------------//
 //REED: use gidpid instead of _getpid for portability to other operating systems.
@@ -121,7 +123,7 @@ int max_element(vector<int>& activelist)
     return max;
 }
 //-----------------------------------------------------------------------------------------------//
-void coaltree(vector<int>& activelist, double theta, double time, int type,
+void coaltree(vector<int>& activelist, double theta, double time, char type,
 	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
 {
     double T = 0.0;
@@ -317,7 +319,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[i].parent=-1;
 			nodevector[i].label='N';
 			nodevector[i].time=0;
-			nodevector[i].type=1;
+			nodevector[i].type='A';
 		}
 
 
@@ -330,7 +332,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[j].parent=-1;
 			nodevector[j].label='N';
 			nodevector[j].time=0;
-			nodevector[j].type=2;
+			nodevector[j].type='B';
 		}
 
 		cout << "size of nodevector is: " << nodevector.size() << endl;
@@ -340,11 +342,11 @@ int main(int argc, char *argv[])														 //receive inputs
 
         vector<int> nodes(2*n-1); 													//n is number of initial nodes
 
-		coaltree(active1, theta1, t1, 1, nodevector, myrand);
-		coaltree(active2, theta2, t2, 2, nodevector, myrand);
+		coaltree(active1, theta1, t1, 'A', nodevector, myrand);
+		coaltree(active2, theta2, t2, 'B', nodevector, myrand);
 
         active1.insert(active1.end(), active2.begin(), active2.end());
-        coaltree(active1, theta3, DBL_MAX, 3, nodevector, myrand);
+        coaltree(active1, theta3, DBL_MAX, 'C', nodevector, myrand);
 
 
 //----------------------------------------------------------------------------////mutations
