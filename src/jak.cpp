@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <limits>
 #include <math.h>
 #include <float.h>
 #include <fstream>
