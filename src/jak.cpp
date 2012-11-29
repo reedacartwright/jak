@@ -64,6 +64,49 @@ string tree_to_string(const vector<nodestruct>& v) {                            
 	
 	return node_str.back() + ";";
 }
+//-----------------------------------------------------------------------------//
+string speciesLabel(int type)
+{
+      
+    cout<<"type: "<<type<<endl;
+    int x=1;
+    string ans="";
+	int value=1;
+	vector<int> index;
+	if (type > 26) {
+	do
+    {
+        x = type/26;
+        cout<<"x: " << x <<endl;
+        value = type%26;
+		cout<<"value: "<< value <<endl;
+		if(value!=0)
+			index.push_back(value);
+		else
+			index.push_back(x);
+		 
+		type = type-value;
+		cout << "type: " << type << endl;
+	} while(value!=0);
+    reverse(index.begin(),index.end());                           //reverses contents of vector
+    for(int i=0; i < index.size(); i++)
+    {
+		cout << " " << index[i];
+    }
+    cout << endl;
+    }
+	else {
+		index.push_back(type);
+	}
+	   
+    string letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for(int i=0; i<index.size(); i++)
+    {
+		ans+=letters[index[i] - 1];
+    }
+	cout << "ans is: " << ans << endl;
+    return ans;
+}
 //----------------------------------------------------------------------------//
 //REED: use gidpid instead of _getpid for portability to other operating systems.
 //      on windows use _getpid via a define
@@ -220,7 +263,7 @@ int main(int argc, char *argv[])														 //receive inputs
     int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
 
-
+	speciesLabel(144);
 //fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
