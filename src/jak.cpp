@@ -74,18 +74,18 @@ string speciesLabel(int type)
 	if (type > 26) {
 	do
     {
-        x = type/26;
+        //x = type/26;
         cout<<"x: " << x <<endl;
         value = type%26;
+		type = type/26;
 		cout<<"value: "<< value <<endl;
-		if(value!=0)
+		//if(value!=0)
 			index.push_back(value);
-		else
-			index.push_back(x);
+		
 		 
-		type = type-value;
+		//type = type-value;
 		cout << "type: " << type << endl;
-	} while(value!=0);
+	} while(type!=0);
     reverse(index.begin(),index.end());                           //reverses contents of vector
     for(int i=0; i < index.size(); i++)
     {
@@ -97,10 +97,10 @@ string speciesLabel(int type)
 		index.push_back(type);
 	}
 	   
-    string letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    string letters="0ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for(int i=0; i<index.size(); i++)
     {
-		ans+=letters[index[i] - 1];
+		ans+=letters[index[i]];
     }
 	cout << "ans is: " << ans << endl;
     return ans;
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])														 //receive inputs
     int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
 
-	speciesLabel(144);
+	speciesLabel(27);
 //fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
