@@ -39,7 +39,7 @@ string convert(int x)					//Function to convert int type to string
     convert_x = convert1.str();
     return(convert_x);
 }
-//-----------------------------------------------------------------------------//
+/*-----------------------------------------------------------------------------//
 string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
     vector<string> node_str(v.size(),"");
     char buffer[16];
@@ -49,24 +49,26 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
+			cout << " the label for child 1 is: " << speciesLabel(v[v[i].child_1].type) << endl;
             temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
             sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+			cout << " the label for child 2 is: " << speciesLabel(v[v[i].child_2].type) << endl;
             temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
             //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
             sprintf(buffer, "%0.6f", v[v[i].child_2].time);
             temp += string(buffer) + ")";
         }
-        temp += v[i].label;
+        //temp += v[i].label;
         node_str[i] = temp;
     }
     return node_str.back() + ";";
 }
-//-----------------------------------------------------------------------------//
+*///-----------------------------------------------------------------------------//
 string speciesLabel(int type)
 {
       
-    cout<<"type: "<<type<<endl;
+    //cout<<"type: "<<type<<endl;
     int x=1;
     string ans="";
 	int value=1;
@@ -97,15 +99,48 @@ string speciesLabel(int type)
 		index.push_back(type);
 	}
 	   
-    string letters="0ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    //string letters="0ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for(int i=0; i<index.size(); i++)
     {
-		ans+=letters[index[i]];
+		//ans+=letters[index[i]];
+		//ans += 'A' + (index[i] - 1);
+		if ((index[i] - 1) != -1) 
+			ans += 'A' + (index[i] - 1);
+		else 
+			ans += 'A' - 20;
     }
-	cout << "ans is: " << ans << endl;
+	//cout << "ans is: " << ans << endl;
     return ans;
 }
-//----------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------//
+string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
+    vector<string> node_str(v.size(),"");
+    char buffer[16];
+    for(int i=0; i<v.size(); i++) {
+        string temp = "";
+
+        if(v[i].child_1 != -1 && v[i].child_2 != -1) {
+            string convert_node1=convert(v[i].child_1);
+            string convert_node2=convert(v[i].child_2);
+			temp += "(" + node_str[v[i].child_1] + speciesLabel(v[v[i].child_1].type) + convert_node1 + ":";
+            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+            temp += string(buffer) + "," + node_str[v[i].child_2] + speciesLabel(v[v[i].child_2].type) + convert_node2+ ":";
+            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
+            temp += string(buffer) + ")";
+        }
+        node_str[i] = temp;
+    }
+    return node_str.back() + ";";
+}
+//-----------------------------------------------------------------------------//
+string mutationLabels(const vector<nodestruct>& t) {
+	string temp = "";
+	for(int i=0; i<t.size(); i++) {
+		temp += t[i].label;
+	}
+	return "[" + temp + "]";
+}
+//-----------------------------------------------------------------------------//
 //REED: use gidpid instead of _getpid for portability to other operating systems.
 //      on windows use _getpid via a define
 #ifdef _MSC_VER
@@ -261,7 +296,7 @@ int main(int argc, char *argv[])														 //receive inputs
     int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
 
-	speciesLabel(27);
+	speciesLabel(677);
 //fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
@@ -346,7 +381,7 @@ int main(int argc, char *argv[])														 //receive inputs
 
 	//REED: What is this for?  It is going to fail on all systems but Kailey's
     ofstream myfile;                                                                //file
-    myfile.open ("C://Users//Kailey//Documents//MATLAB//newickstruct_data.txt");     //open file
+    myfile.open ("C://Users//Akash//Documents//MATLAB//newickstruct_data.txt");     //open file
 
     for(int repeat=0; repeat<trees; repeat++) {                                     //loops once for each tree
         vector<nodestruct> nodevector(n);                                           //create nodevector (vector of structs)
@@ -414,8 +449,10 @@ int main(int argc, char *argv[])														 //receive inputs
 //----------------------------------------------------------------------------//
 
         cout << "Newick tree: " << repeat+1<< endl;
-        cout << tree_to_string(nodevector) << endl;                                 //print newick tree to console
-        myfile << tree_to_string(nodevector)<< " \n";                               //print newick tree to file
+        cout << tree_to_string(nodevector) << endl;                                //print newick tree to console
+		cout << mutationLabels(nodevector) << endl;
+		myfile << tree_to_string(nodevector)<< " \n";                               //print newick tree to file
+		myfile << mutationLabels(nodevector)<< " \n";
         //int dtotal = d + d1;
         //cout << "Number of mutations: " << dtotal << endl;
 
