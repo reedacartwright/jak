@@ -123,7 +123,8 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         }
         node_str[i] = temp;
     }
-    return node_str.back() + ";";
+	string temp = speciesLabel(v.back().type) + convert(v.size() - 1);
+    return node_str.back() + temp + ";";
 }
 //-----------------------------------------------------------------------------//
 string mutationLabels(const vector<nodestruct>& t)			//Function to construct vector of mutation labels for tree, in numerical order
@@ -282,6 +283,14 @@ void coaltree(vector<int>& activelist, double theta, double time, char type,
 
 }
 
+//-------------------------------------------------------------------------------------------------//
+double get_branch_lengths(const vector<nodestruct>& v)
+{
+	double sum=0.0;
+	for(int i=0; i<v.size(); i++)
+		 sum+=v[i].time;
+	return sum;
+}
 //-------------------------------------------------------------------------------------------------//
 
 int main(int argc, char *argv[])														 //receive inputs
@@ -451,6 +460,8 @@ int main(int argc, char *argv[])														 //receive inputs
         //cout << "Number of mutations: " << dtotal << endl;
 
         total_tree=total_tree+t;
+
+		cout<<"Sum of total branch lengths: "<<get_branch_lengths(nodevector)<<endl;
 
     }                                                                               //end # of trees loop
     myfile.close();
