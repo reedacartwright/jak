@@ -108,6 +108,7 @@ string speciesLabel(int type)			//Function to convert species number to letter f
 //-----------------------------------------------------------------------------//
 string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
     vector<string> node_str(v.size(),"");
+	double branch_sum = 0.0;
     char buffer[16];
     for(int i=0; i<v.size(); i++) {
         string temp = "";
@@ -284,14 +285,6 @@ void coaltree(vector<int>& activelist, double theta, double time, char type,
 }
 
 //-------------------------------------------------------------------------------------------------//
-double get_branch_lengths(const vector<nodestruct>& v)
-{
-	double sum=0.0;
-	for(int i=0; i<v.size(); i++)
-		 sum+=v[i].time;
-	return sum;
-}
-//-------------------------------------------------------------------------------------------------//
 
 int main(int argc, char *argv[])														 //receive inputs
 {
@@ -460,8 +453,6 @@ int main(int argc, char *argv[])														 //receive inputs
         //cout << "Number of mutations: " << dtotal << endl;
 
         total_tree=total_tree+t;
-
-		cout<<"Sum of total branch lengths: "<<get_branch_lengths(nodevector)<<endl;
 
     }                                                                               //end # of trees loop
     myfile.close();
