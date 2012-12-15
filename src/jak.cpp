@@ -376,7 +376,7 @@ int main(int argc, char *argv[])														 //receive inputs
 
 	//REED: What is this for?  It is going to fail on all systems but Kailey's
     ofstream myfile;                                                                //file
-    myfile.open ("C://Users//Akash//Documents//MATLAB//newickstruct_data.txt");     //open file
+    myfile.open ("C://Users//Kailey//Documents//Visual Studio 2010//Projects//jak_data//jak_data//newickstruct_data.txt");     //open file
 
     for(int repeat=0; repeat<trees; repeat++) {                                     //loops once for each tree
         vector<nodestruct> nodevector(n);                                           //create nodevector (vector of structs)
@@ -443,7 +443,7 @@ int main(int argc, char *argv[])														 //receive inputs
                                                                                    //end mutations for loop
 //----------------------------------------------------------------------------//
 
-        cout << "Newick tree: " << repeat+1<< endl;
+        //cout << "Newick tree: " << repeat+1<< endl;
 		cout << mutationLabels(nodevector)<<"\t";
         cout << tree_to_string(nodevector) << endl;                                //print newick tree to console
 		myfile << mutationLabels(nodevector)<< " \n";
@@ -459,10 +459,12 @@ int main(int argc, char *argv[])														 //receive inputs
 
 //double tree_height_avg=total_tree/trees;
 
+#ifndef NDEBUG
     cout<<"Random seed used: "<<create_random_seed()<<endl;
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+#endif
     return EXIT_SUCCESS;
 }
 
