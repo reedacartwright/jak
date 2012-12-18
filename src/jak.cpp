@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <limits>
 #include <math.h>
 #include <float.h>
 #include <fstream>
@@ -38,9 +39,76 @@ string convert(int x)					//Function to convert int type to string
     convert_x = convert1.str();
     return(convert_x);
 }
+/*-----------------------------------------------------------------------------//
+string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
+    vector<string> node_str(v.size(),"");
+    char buffer[16];
+	
+    for(int i=0; i<v.size(); i++) {
+        string temp = "";
+
+        if(v[i].child_1 != -1 && v[i].child_2 != -1) {
+            string convert_node1=convert(v[i].child_1);
+            string convert_node2=convert(v[i].child_2);
+<<<<<<< HEAD
+            temp += "(" + node_str[v[i].child_1] + "_" + (v[v[i].child_1].type) + convert_node1 + ":";
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + (v[v[i].child_2].type) + convert_node2+ ":";
+=======
+			cout << " the label for child 1 is: " << speciesLabel(v[v[i].child_1].type) << endl;
+            temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+			cout << " the label for child 2 is: " << speciesLabel(v[v[i].child_2].type) << endl;
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
+>>>>>>> 50921882021dc70d46766de31ccd10717c8beba7
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
+            temp += string(buffer) + ")";
+        }
+        //temp += v[i].label;
+        node_str[i] = temp;
+    }
+	
+	return node_str.back() + ";";
+}
+*///-----------------------------------------------------------------------------//
+string speciesLabel(int type)			//Function to convert species number to letter format for tree output
+{
+    int x=1;
+    string ans="";
+	int value=1;
+	vector<int> index;
+	if (type > 26) {
+		do
+		{
+			value = type%26;
+			type = type/26;
+		
+			//if(value!=0)
+				index.push_back(value);
+		
+			//type = type-value;
+		} while(type!=0);
+		reverse(index.begin(),index.end());                           //reverses contents of vector
+    }
+	else 
+		index.push_back(type);
+	   
+    for(int i=0; i<index.size(); i++)
+    {
+		if ((index[i] - 1) != -1) 
+			ans += 'A' + (index[i] - 1);
+		else 
+			ans += 'A' - 20;
+    }
+    return ans;
+}
 //-----------------------------------------------------------------------------//
 string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
     vector<string> node_str(v.size(),"");
+	double branch_sum = 0.0;
     char buffer[16];
     for(int i=0; i<v.size(); i++) {
         string temp = "";
@@ -48,20 +116,27 @@ string tree_to_string(const vector<nodestruct>& v) {                            
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=convert(v[i].child_1);
             string convert_node2=convert(v[i].child_2);
-            temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
-            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
+			temp += "(" + node_str[v[i].child_1] + speciesLabel(v[v[i].child_1].type) + convert_node1 + ":";
             sprintf(buffer, "%0.6f", v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
-            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
+            temp += string(buffer) + "," + node_str[v[i].child_2] + speciesLabel(v[v[i].child_2].type) + convert_node2+ ":";
             sprintf(buffer, "%0.6f", v[v[i].child_2].time);
             temp += string(buffer) + ")";
         }
-        temp += v[i].label;
         node_str[i] = temp;
     }
-    return node_str.back() + ";";
+	string temp = speciesLabel(v.back().type) + convert(v.size() - 1);
+    return node_str.back() + temp + ";";
 }
-//----------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------//
+string mutationLabels(const vector<nodestruct>& t)			//Function to construct vector of mutation labels for tree, in numerical order
+{
+	string temp = "";
+	for(int i=0; i<t.size(); i++) {
+		temp += t[i].label;
+	}
+	return "[" + temp + "]";
+}
+//-----------------------------------------------------------------------------//
 //REED: use gidpid instead of _getpid for portability to other operating systems.
 //      on windows use _getpid via a define
 #ifdef _MSC_VER
@@ -121,7 +196,7 @@ int max_element(vector<int>& activelist)
     return max;
 }
 //-----------------------------------------------------------------------------------------------//
-void coaltree(vector<int>& activelist, double theta, double time, int type,
+void coaltree(vector<int>& activelist, double theta, double time, char type,
 	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
 {
     double T = 0.0;
@@ -133,33 +208,32 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 
 	while(size>1)
 	{
+		/*
 	    cout << endl;
 	    for (i=0; i<activelist.size(); i++)
 		{
 		    cout << " " << activelist[i];
 		}
 		cout << endl;
+		*/
 
         double Z = myrand1.get_double52();
 		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
 		double U = (-log(Z))*mean;
-		cout << " U is : " << U << endl;
 		if(T+U>time)
 		{
 			break;
 		}
 		T+=U;
-		cout <<"counter Time (T) is: " << T << endl;
 
 		random1 = (myrand1.get_uint32()% size);
-		do {
+		do 
+		{
 			random2 = (myrand1.get_uint32()% size);
 		} while(random1==random2);
 
 		if (random1>random2) 															//orders two nodes minimum to maximum
 			swap(random1,random2);
-
-        cout << "coalescing nodes are: " << random1 << " " << random2 << endl;
 
 		int newparent = nodeVector.size();
 		nodeVector.push_back(nodestruct());
@@ -167,45 +241,45 @@ void coaltree(vector<int>& activelist, double theta, double time, int type,
 		nodeVector[newparent].type = type;
 
 		nodeVector[newparent].child_1 = activelist[random1];                        //update parent node
-		cout << " nodeVector[newparent].child_1 is : " << nodeVector[newparent].child_1 << endl;
+		//cout << " nodeVector[newparent].child_1 is : " << nodeVector[newparent].child_1 << endl;
 
 		nodeVector[newparent].child_2 = activelist[random2];
-		cout << " nodeVector[newparent].child_2 is : " << nodeVector[newparent].child_2 << endl;
+		//cout << " nodeVector[newparent].child_2 is : " << nodeVector[newparent].child_2 << endl;
 
 		nodeVector[newparent].time = T;
-        cout << " nodeVector[newparent].time : " << nodeVector[newparent].time << endl;
+       // cout << " nodeVector[newparent].time : " << nodeVector[newparent].time << endl;
 
 		nodeVector[activelist[random1]].parent = newparent;                                //update child nodes
-		cout << " nodeVector[activelist[random1]].parent : " << nodeVector[activelist[random1]].parent << endl;
+		//cout << " nodeVector[activelist[random1]].parent : " << nodeVector[activelist[random1]].parent << endl;
 
 		nodeVector[activelist[random2]].parent = newparent;
-		cout << " nodeVector[activelist[random2]].parent : " << nodeVector[activelist[random2]].parent << endl;
+		//cout << " nodeVector[activelist[random2]].parent : " << nodeVector[activelist[random2]].parent << endl;
 
-        cout << " before nodeVector[activelist[random1]].time : " << nodeVector[activelist[random1]].time << endl;
+        //cout << " before nodeVector[activelist[random1]].time : " << nodeVector[activelist[random1]].time << endl;
 		nodeVector[activelist[random1]].time = T - nodeVector[activelist[random1]].time;
-		cout << " after nodeVector[activelist[random1]].time : " << nodeVector[activelist[random1]].time << endl;
+		//cout << " after nodeVector[activelist[random1]].time : " << nodeVector[activelist[random1]].time << endl;
 
-        cout << " before nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
+        //cout << " before nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
 		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
-		cout << " after nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
+		//cout << " after nodeVector[activelist[random2]].time : " << nodeVector[activelist[random2]].time << endl;
 
 		activelist[random1] = newparent;												 //update active vector
 		activelist.erase (activelist.begin() + random2);
-		cout << "active list is: " << endl;
+		/*cout << "active list is: " << endl;
 
 		for (i=0; i<activelist.size(); i++)
 		{
 		    cout << " " << activelist[i];
 		}
 		cout << endl;
-		cout << endl;
+		cout << endl;*/
 		size--;
 	}
 
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 	{
 		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
-		cout << " nodeVector[activelist[i]].time : " << nodeVector[activelist[i]].time << endl;
+		//cout << " nodeVector[activelist[i]].time : " << nodeVector[activelist[i]].time << endl;
 	}
 
 }
@@ -217,7 +291,7 @@ int main(int argc, char *argv[])														 //receive inputs
     int N1, N2, n, N, trees;
     double mean, theta1, theta2, theta3, t1, t2, total_tree=0;
 
-
+	speciesLabel(677);
 //fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
@@ -302,7 +376,7 @@ int main(int argc, char *argv[])														 //receive inputs
 
 	//REED: What is this for?  It is going to fail on all systems but Kailey's
     ofstream myfile;                                                                //file
-    myfile.open ("C://Users//Kailey//Documents//MATLAB//newickstruct_data.txt");     //open file
+    myfile.open ("C://Users//Kailey//Documents//Visual Studio 2010//Projects//jak_data//jak_data//newickstruct_data.txt");     //open file
 
     for(int repeat=0; repeat<trees; repeat++) {                                     //loops once for each tree
         vector<nodestruct> nodevector(n);                                           //create nodevector (vector of structs)
@@ -333,7 +407,7 @@ int main(int argc, char *argv[])														 //receive inputs
 			nodevector[j].type=2;
 		}
 
-		cout << "size of nodevector is: " << nodevector.size() << endl;
+		//cout << "size of nodevector is: " << nodevector.size() << endl;
 //----------------------------------------------------------------------------//
 
         double t=0.0;
@@ -369,9 +443,12 @@ int main(int argc, char *argv[])														 //receive inputs
                                                                                    //end mutations for loop
 //----------------------------------------------------------------------------//
 
-        cout << "Newick tree: " << repeat+1<< endl;
-        cout << tree_to_string(nodevector) << endl;                                 //print newick tree to console
-        myfile << tree_to_string(nodevector)<< " \n";                               //print newick tree to file
+        //cout << "Newick tree: " << repeat+1<< endl;
+		cout << mutationLabels(nodevector)<<"\t";
+        cout << tree_to_string(nodevector) << endl;                                //print newick tree to console
+		myfile << mutationLabels(nodevector)<< " \n";
+		myfile << tree_to_string(nodevector)<< " \n";                               //print newick tree to file
+		
         //int dtotal = d + d1;
         //cout << "Number of mutations: " << dtotal << endl;
 
@@ -382,12 +459,12 @@ int main(int argc, char *argv[])														 //receive inputs
 
 //double tree_height_avg=total_tree/trees;
 
+#ifndef NDEBUG
     cout<<"Random seed used: "<<create_random_seed()<<endl;
-
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
     cout << "Press ENTER to quit.";
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-
+#endif
     return EXIT_SUCCESS;
 }
 
