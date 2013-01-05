@@ -37,7 +37,7 @@ struct nodestruct {
 
 // Function to convert int type to string
 // Cache labels for reuse
-string convert(int x) {   
+string id_to_string(int x) {   
 	static vector<string> v;
 	static char buffer[64];
 	for(int xx = (int)v.size(); xx <= x; ++xx) {
@@ -82,8 +82,8 @@ string tree_to_string(const vector<nodestruct>& v) {
         string temp = "";
 
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
-            string convert_node1=convert(v[i].child_1);
-            string convert_node2=convert(v[i].child_2);
+            string convert_node1=id_to_string(v[i].child_1);
+            string convert_node2=id_to_string(v[i].child_2);
 			temp += "(" + node_str[v[i].child_1] + speciesLabel(v[v[i].child_1].type) + convert_node1 + ":";
             sprintf(buffer, "%0.6f", v[v[i].child_1].time);
             temp += string(buffer) + "," + node_str[v[i].child_2] + speciesLabel(v[v[i].child_2].type) + convert_node2+ ":";
@@ -92,7 +92,7 @@ string tree_to_string(const vector<nodestruct>& v) {
         }
         node_str[i] = temp;
     }
-	string temp = speciesLabel(v.back().type) + convert(v.size() - 1);
+	string temp = speciesLabel(v.back().type) + id_to_string(v.size() - 1);
     return node_str.back() + temp + ";";
 }
 //-----------------------------------------------------------------------------//
