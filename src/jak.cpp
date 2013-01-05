@@ -47,6 +47,7 @@ string id_to_string(int x) {
     return v[x];
 }
 
+// TODO: Cache this
 string speciesLabel(int type)			//Function to convert species number to letter format for tree output
 {
     int x=1;
@@ -176,6 +177,7 @@ void coaltree(vector<int>& activelist, double theta, double time, char type,
 		T+=U;
 
 		// pick a random pair of nodes
+		// TODO: use alias table to optimize this
 		random1 = (myrand1.get_uint32() % size);
 		do {
 			random2 = (myrand1.get_uint32() % size);
@@ -219,7 +221,6 @@ int main(int argc, char *argv[])														 //receive inputs
     int N1, N2, n, N, trees;
     double theta1, theta2, theta3, t1, t2;
 
-	speciesLabel(677);
 	//TODO: fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
