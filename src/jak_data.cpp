@@ -1,15 +1,12 @@
 // jak_data.cpp
 
-#include "stdafx.h"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <cstdio>
 
 using namespace std;
 
@@ -50,11 +47,10 @@ int main(int argc, char *argv[])
 			p=end-begin;
 		}
 
-		cout<<branch_total;
-		cout<<endl;
+		cout << branch_total;
+		cout << endl;
 	}	
 
     return EXIT_SUCCESS;
 
 }
-
