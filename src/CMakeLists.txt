@@ -37,4 +37,9 @@ INCLUDE_DIRECTORIES(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/include")
 ADD_EXECUTABLE(jak
   jak.cpp
   xorshift64.h
+  aliastable.h
+)
+
+ADD_EXECUTABLE(jak_data
+  jak_data.cpp
 )
