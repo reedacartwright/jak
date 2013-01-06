@@ -47,22 +47,25 @@ alias_table mutation[4];
 
 // data structure to hold node information
 struct nodestruct {
-    int child_1;
-    int child_2;
-    int parent;
-    char label; // nucleotide
-    double time;
-    int type; // species/population identifier
+    int child_1;   // ID of right child
+    int child_2;   // ID of left child
+    int parent;    // ID of parent
+    double time;   // "distance" to parent
+    int species;   // species/population identifier
+    char label;    // nucleotide
+	
+	nodestruct() : child_1(-1), child_2(-1), parent(-1),
+	               label(0), time(0.0), species(0) { }
 };
 
-void coaltree(vector<int>& activelist, double theta, double time, char type,
-	          vector<nodestruct>& nodeVector, xorshift64& myrand1);
+void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double time, char species,
+	          vector<nodestruct>& nodeVector);
 void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter);
 
 string id_to_string(int x);
-string speciesLabel(int type);
+string species_label(int type);
 string tree_to_string(const vector<nodestruct>& v);
-string mutationLabels(const vector<nodestruct>& t);
+string mutation_string(const vector<nodestruct>& t);
 
 //-----------------------------------------------------------------------------//
 // random seed generator
@@ -89,47 +92,46 @@ int main(int argc, char *argv[])
 	//TODO: fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
-			while(trees<1)
-			{	cout<<"Error: Enter number of trees: ";
-				cin>>trees;
-			}
-        N1=atoi(argv[2]);
-			while(N1<1)
-			{	cout<<"Error: Enter number of tips for first species: ";
-				cin>>N1;
-			}
+		while(trees<1)
+		{	cout<<"Error: Enter number of trees: ";
+			cin>>trees;
+		}
+		N1=atoi(argv[2]);
+		while(N1<1)
+		{	cout<<"Error: Enter number of tips for first species: ";
+			cin>>N1;
+		}
         N2=atoi(argv[3]);
-			while(N2<1)
-			{	cout<<"Error: Enter number of tips for second species: ";
-				cin>>N1;
-			}
+		while(N2<1)
+		{	cout<<"Error: Enter number of tips for second species: ";
+			cin>>N1;
+		}
         theta1=strtod(argv[4], NULL);
-			while(theta1<0.0)
-			{	cout<<"Error: Enter theta1: ";
-				cin>>theta1;
-			}
+		while(theta1<0.0)
+		{	cout<<"Error: Enter theta1: ";
+			cin>>theta1;
+		}
         theta2=strtod(argv[5], NULL);
-			while(theta2<0.0)
-			{	cout<<"Error: Enter theta2: ";
-				cin>>theta2;
-			}
+		while(theta2<0.0)
+		{	cout<<"Error: Enter theta2: ";
+			cin>>theta2;
+		}
         theta3=strtod(argv[6], NULL);
-			while(theta3<0.0)
-				{	cout<<"Error: Enter theta3: ";
-					cin>>theta3;
-				}
+		while(theta3<0.0)
+		{	cout<<"Error: Enter theta3: ";
+			cin>>theta3;
+		}
         t1=strtod(argv[7], NULL);
-			while(t1<0.0)
-			{	cout<<"Error: Enter t1: ";
-				cin>>t1;
-			}
+		while(t1<0.0)
+		{	cout<<"Error: Enter t1: ";
+			cin>>t1;
+		}
         t2=strtod(argv[8], NULL);
-			while(t2<0.0)
-			{	cout<<"Error: Enter t2: ";
-				cin>>t2;
-			}
+		while(t2<0.0)
+		{	cout<<"Error: Enter t2: ";
+			cin>>t2;
+		}
     }
-
     else if (argc == 1) {
         cout << "Enter number of trees: ";
         cin >> trees;
@@ -147,9 +149,7 @@ int main(int argc, char *argv[])
         cin >> t1;
         cout << endl << "Enter t2: ";
         cin >> t2;
-    }
-
-    else {
+    } else {
         cerr << "error, must have format: prg name, trees, # of tips for first"
                 "species, # of tips for second species, theta1, theta2,"
                 "theta3, t1, t2" << endl;
@@ -182,12 +182,7 @@ int main(int argc, char *argv[])
 		for(int i=0; i<N1; i++)
 		{
 			active1[i]=i;
-			nodevector[i].child_1=-1;
-			nodevector[i].child_2=-1;
-			nodevector[i].parent=-1;
-			nodevector[i].label='N';
-			nodevector[i].time=0;
-			nodevector[i].type=1;
+			nodevector[i].species=1;
 		}
 
 		// initialize active list for species 2
@@ -195,23 +190,18 @@ int main(int argc, char *argv[])
 		for(int j=N1; j<N1+N2; j++)
 		{
 			active2[j-N1]=j;
-			nodevector[j].child_1=-1;
-			nodevector[j].child_2=-1;
-			nodevector[j].parent=-1;
-			nodevector[j].label='N';
-			nodevector[j].time=0;
-			nodevector[j].type=2;
+			nodevector[j].species=2;
 		}
 		
 		// coalesce population 1
-		coaltree(active1, theta1, t1, 1, nodevector, myrand);
+		coaltree(myrand, active1, theta1, t1, 1, nodevector);
 		
 		// coalesce population 2
-		coaltree(active2, theta2, t2, 2, nodevector, myrand);
+		coaltree(myrand, active2, theta2, t2, 2, nodevector);
 
 		// coalesce population 3
         active1.insert(active1.end(), active2.begin(), active2.end());
-        coaltree(active1, theta3, DBL_MAX, 3, nodevector, myrand);
+        coaltree(myrand, active1, theta3, DBL_MAX, 3, nodevector);
 
 		// Assume root has nucleotide 'A'
         nodevector.back().label = 0;
@@ -230,7 +220,7 @@ int main(int argc, char *argv[])
 
 //----------------------------------------------------------------------------//
 
-		cout << mutationLabels(nodevector) << "\t";
+		cout << mutation_string(nodevector) << "\t";
         cout << tree_to_string(nodevector) << endl; //print newick tree to console
     } //end # of trees loop
 
@@ -244,8 +234,8 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-void coaltree(vector<int>& activelist, double theta, double time, char type,
-	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
+void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double time, char species,
+	          vector<nodestruct>& nodeVector)
 {
     double T = 0.0;
     int i = 0;
@@ -276,7 +266,7 @@ void coaltree(vector<int>& activelist, double theta, double time, char type,
 		int newparent = (int)nodeVector.size();
 		nodeVector.push_back(nodestruct());
 		
-		nodeVector[newparent].type = type;
+		nodeVector[newparent].species = species;
 
 		//update parent node
 		nodeVector[newparent].child_1 = activelist[random1];
@@ -313,30 +303,20 @@ string id_to_string(int x) {
 }
 
 // TODO: Cache this
-string speciesLabel(int type)			//Function to convert species number to letter format for tree output
+//Function to convert species number to letter format for tree output
+string species_label(int species)
 {
-    int x=1;
-    string ans="";
-	int value=1;
-	vector<int> index;
-	if (type > 26) {
-		do {
-			value = type%26;
-			type = type/26;
-			index.push_back(value);
-		} while(type!=0);
-		reverse(index.begin(),index.end());                           //reverses contents of vector
-    }
-	else 
-		index.push_back(type);
-	   
-    for(int i=0; i<index.size(); i++)
-    {
-		if ((index[i] - 1) != -1) 
-			ans += 'A' + (index[i] - 1);
-		else 
-			ans += 'A' - 20;
-    }
+    // Species of 1 should equal 'A';
+	--species;
+	
+    string ans = "";	
+	while(species > 26) {
+		ans += 'A' + species%26;
+		species /= 26;
+	}
+	ans += 'A' + species%26;
+	reverse(ans.begin(),ans.end());
+	
     return ans;
 }
 //-----------------------------------------------------------------------------//
@@ -350,25 +330,29 @@ string tree_to_string(const vector<nodestruct>& v) {
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
             string convert_node1=id_to_string(v[i].child_1);
             string convert_node2=id_to_string(v[i].child_2);
-			temp += "(" + node_str[v[i].child_1] + speciesLabel(v[v[i].child_1].type) + convert_node1 + ":";
-            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + speciesLabel(v[v[i].child_2].type) + convert_node2+ ":";
-            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
-            temp += string(buffer) + ")";
+			temp += "(" + node_str[v[i].child_1] + species_label(v[v[i].child_1].species) + convert_node1 + ":";
+            sprintf(buffer, "%0.6g", v[v[i].child_1].time);
+			temp += buffer;
+            temp += "," + node_str[v[i].child_2] + species_label(v[v[i].child_2].species) + convert_node2+ ":";
+            sprintf(buffer, "%0.6g", v[v[i].child_2].time);
+            temp += buffer;
+			temp += ")";
         }
         node_str[i] = temp;
     }
-	string temp = speciesLabel(v.back().type) + id_to_string(v.size() - 1);
+	string temp = species_label(v.back().species) + id_to_string(v.size() - 1);
     return node_str.back() + temp + ";";
 }
 //-----------------------------------------------------------------------------//
-string mutationLabels(const vector<nodestruct>& t)			//Function to construct vector of mutation labels for tree, in numerical order
+// Function to construct vector of mutation labels for tree, in numerical order
+string mutation_string(const vector<nodestruct>& t)
 {
-	string temp = "";
+	string temp = "[";
 	for(int i=0; i<t.size(); i++) {
 		temp += t[i].label;
 	}
-	return "[" + temp + "]";
+	temp += ']';
+	return temp;
 }
 
 //-----------------------------------------------------------------------------//
