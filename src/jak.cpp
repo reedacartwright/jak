@@ -240,7 +240,7 @@ void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double
     int i = 0;
 	int random1, random2;
 
-	size_t size = activelist.size();
+	int size = (int)activelist.size();
 
 	while(size>1)
 	{
@@ -252,16 +252,12 @@ void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double
 		T+=U;
 
 		// pick a random pair of nodes
-		// TODO: use alias table to optimize this
-		random1 = (myrand1.get_uint32() % size);
-		do {
-			random2 = (myrand1.get_uint32() % size);
-		} while(random1==random2);
-
-		//orders two nodes minimum to maximum
-		if (random1>random2) 
+		random1 = static_cast<int>(size*myrand1.get_double52());
+		random2 = static_cast<int>((size-1)*myrand1.get_double52());
+		random2 = (random1+random2+1) % size;
+		if(random1 > random2)
 			swap(random1,random2);
-
+		
 		int newparent = (int)nodeVector.size();
 		nodeVector.push_back(nodestruct());
 		
