@@ -1,3 +1,8 @@
+#pragma once
+#ifndef XORSHIFT64_H
+#define XORSHIFT64_H
+
+#include <cfloat>
 #include <cstdint>
 #include <algorithm>
 
@@ -70,3 +75,5 @@ public:
 private:
 	uint64_t u,w;
 };
+
+#endif
