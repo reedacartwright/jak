@@ -38,10 +38,10 @@ using namespace std;
 
 // Conditional probably of mutation
 double mutation_matrix[4][4] = {
-	{0.25, 0.25, 0.25, 0.25},
-	{0.25, 0.25, 0.25, 0.25},
-	{0.25, 0.25, 0.25, 0.25},
-	{0.25, 0.25, 0.25, 0.25}
+/*A*/ {0.25, 0.25, 0.25, 0.25},
+/*C*/ {0.25, 0.25, 0.25, 0.25},
+/*G*/ {0.25, 0.25, 0.25, 0.25},
+/*T*/ {0.25, 0.25, 0.25, 0.25}
 };
 alias_table mutation[4];
 
@@ -171,10 +171,14 @@ int main(int argc, char *argv[])
 		mutation[i].create(&mutation_matrix[i][0],&mutation_matrix[i][4]);
 	}
 	
-    for(int repeat=0; repeat<trees; repeat++) { //loops once for each tree
-        vector<nodestruct> nodevector(n); //create nodevector (vector of structs)
+	// loop once for each tree
+    for(int repeat=0; repeat<trees; repeat++)
+	{ 
+        // create nodevector (vector of structs)
+		vector<nodestruct> nodevector(n);
 		
-		vector<int> active1(N1); //initialize active list for species 1
+		// initialize active list for species 1
+		vector<int> active1(N1); 
 		for(int i=0; i<N1; i++)
 		{
 			active1[i]=i;
@@ -186,8 +190,8 @@ int main(int argc, char *argv[])
 			nodevector[i].type=1;
 		}
 
-
-		vector<int> active2(N2); //initialize active list for species 2
+		// initialize active list for species 2
+		vector<int> active2(N2);
 		for(int j=N1; j<N1+N2; j++)
 		{
 			active2[j-N1]=j;
@@ -198,26 +202,29 @@ int main(int argc, char *argv[])
 			nodevector[j].time=0;
 			nodevector[j].type=2;
 		}
-
-//----------------------------------------------------------------------------//
+		
+		// coalesce population 1
 		coaltree(active1, theta1, t1, 1, nodevector, myrand);
+		
+		// coalesce population 2
 		coaltree(active2, theta2, t2, 2, nodevector, myrand);
 
+		// coalesce population 3
         active1.insert(active1.end(), active2.begin(), active2.end());
         coaltree(active1, theta3, DBL_MAX, 3, nodevector, myrand);
 
-//----------------------------------------------------------------------------//
-//mutations
+		// Assume root has nucleotide 'A'
         nodevector.back().label = 0;
 		// start mutations for loop
-        for (int i = (int)nodevector.size() - 2; i >= 0; --i) {                                               
+        for (int i = (int)nodevector.size() - 2; i >= 0; --i)
+		{                                               
             int counter = 0;
             nodevector[i].label = nodevector[nodevector[i].parent].label;
             set_mutations(myrand, nodevector[i].label, nodevector[i].time, counter);
         }
 		// Label nodes
         for (int i=0; i < nodevector.size(); i++){
-            char s[] = "ATCG";
+            char s[] = "ACGT";
             nodevector[i].label = s[nodevector[i].label];
         }
 
