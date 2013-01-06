@@ -60,7 +60,7 @@ struct nodestruct {
 
 void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double time, char species,
 	          vector<nodestruct>& nodeVector);
-void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter);
+int set_mutations(xorshift64 &myrand1, char &G, double time);
 
 string id_to_string(int x);
 string species_label(int type);
@@ -208,9 +208,8 @@ int main(int argc, char *argv[])
 		// start mutations for loop
         for (int i = (int)nodevector.size() - 2; i >= 0; --i)
 		{                                               
-            int counter = 0;
             nodevector[i].label = nodevector[nodevector[i].parent].label;
-            set_mutations(myrand, nodevector[i].label, nodevector[i].time, counter);
+            set_mutations(myrand, nodevector[i].label, nodevector[i].time);
         }
 		// Label nodes
         for (int i=0; i < nodevector.size(); i++){
@@ -362,14 +361,15 @@ string mutation_string(const vector<nodestruct>& t)
 }
 
 //-----------------------------------------------------------------------------//
-void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter)
+int set_mutations(xorshift64 &myrand1, char &G, double time)
 {   
-    double m = rand_exp(myrand1); //m = total distance travelled along branch length
+    int counter = 0;
+	double m = rand_exp(myrand1); //m = total distance travelled along branch length
     while (m <= time) { //if m < branch length --> mutate
         ++counter;  //muation counter
 		// use the alias tables to effeciently sample the result of the mutation
 		G = static_cast<char>(mutation[G](myrand1.get_uint64()));
         m += rand_exp(myrand1);
     }
+	return counter;
 }
-
