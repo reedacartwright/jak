@@ -31,6 +31,7 @@ seed = 1776
 #include <fstream>
 
 #include "xorshift64.h"
+#include "rexp.h"
 
 using namespace std;
 
@@ -131,17 +132,16 @@ inline unsigned int create_random_seed() {
 }
 
 //-----------------------------------------------------------------------------//
-void set_mutations(xorshift64 &myrand1, char &G, double time, int& m_counter)
+void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter)
 {   double mutations[4][4]={
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0},
         {0.25,0.50,0.75,1.0}
     };
-    double m = 0.0;
-    m = m - log(myrand1.get_double52());                                            //m = total distance travelled along branch length
-    while (m <= time) {                                                                //if m < branch length --> mutate
-        m_counter = m_counter + 1;                                                  //muation counter
+    double m = rand_exp(myrand1); //m = total distance travelled along branch length
+    while (m <= time) { //if m < branch length --> mutate
+        ++counter;  //muation counter
         double rand3=myrand1.get_double52();
         if (rand3<=mutations[G][0])
             G = 0;
@@ -151,20 +151,8 @@ void set_mutations(xorshift64 &myrand1, char &G, double time, int& m_counter)
             G = 2;
         else if (rand3<=mutations[G][3])
             G = 3;
-        m = m - log(myrand1.get_double52());
+        m += rand_exp(myrand1);
     }
-}
-//-----------------------------------------------------------------------------------------------//
-
-int max_element(vector<int>& activelist)
-{
-    int max=0;
-    for(int i=0; i<activelist.size(); i++)
-    {   if(max<activelist[i])
-            max=activelist[i];
-    }
-
-    return max;
 }
 //-----------------------------------------------------------------------------------------------//
 void coaltree(vector<int>& activelist, double theta, double time, char type,
@@ -179,9 +167,8 @@ void coaltree(vector<int>& activelist, double theta, double time, char type,
 	while(size>1)
 	{
         // Draw waiting time until next coalescent event
-		double Z = myrand1.get_double52();
 		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
-		double U = (-log(Z))*mean;
+		double U = rand_exp(myrand1, mean);
 		if(T+U>time)
 			break;
 		T+=U;
