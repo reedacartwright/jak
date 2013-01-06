@@ -73,7 +73,7 @@ string speciesLabel(int type)
     string ans="";
 	int value=1;
 	vector<int> index;
-	if (type > 26) {
+	if (type > 25) {
 	do
     {
         //x = type/26;
@@ -101,15 +101,10 @@ string speciesLabel(int type)
 	   
     //string letters="0ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for(int i=0; i<index.size(); i++)
-    {
-		//ans+=letters[index[i]];
-		//ans += 'A' + (index[i] - 1);
-		if ((index[i] - 1) != -1) 
-			ans += 'A' + (index[i] - 1);
-		else 
-			ans += 'A' - 20;
+    { 
+			ans += 'A' + index[i];
     }
-	//cout << "ans is: " << ans << endl;
+	cout << "ans is: " << ans << endl;
     return ans;
 }
 //-----------------------------------------------------------------------------//
