@@ -313,7 +313,7 @@ string species_label(int species)
 	string ans;
 	for(int xx=(int)v.size(); xx <= species; ++xx) {
 		ans.clear();
-		while(xx > 26) {
+		while(xx >= 26) {
 			ans += 'A' + xx%26;
 			xx /= 26;
 		}
