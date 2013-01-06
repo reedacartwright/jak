@@ -57,77 +57,13 @@ struct nodestruct {
 
 void coaltree(vector<int>& activelist, double theta, double time, char type,
 	          vector<nodestruct>& nodeVector, xorshift64& myrand1);
+void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter);
 
-// Function to convert int type to string
-// Cache labels for reuse
-string id_to_string(int x) {   
-	static vector<string> v;
-	static char buffer[64];
-	for(int xx = (int)v.size(); xx <= x; ++xx) {
-		sprintf(buffer, "%d", xx);
-		v.push_back(buffer);
-	}
-    return v[x];
-}
+string id_to_string(int x);
+string speciesLabel(int type);
+string tree_to_string(const vector<nodestruct>& v);
+string mutationLabels(const vector<nodestruct>& t);
 
-// TODO: Cache this
-string speciesLabel(int type)			//Function to convert species number to letter format for tree output
-{
-    int x=1;
-    string ans="";
-	int value=1;
-	vector<int> index;
-	if (type > 26) {
-		do {
-			value = type%26;
-			type = type/26;
-			index.push_back(value);
-		} while(type!=0);
-		reverse(index.begin(),index.end());                           //reverses contents of vector
-    }
-	else 
-		index.push_back(type);
-	   
-    for(int i=0; i<index.size(); i++)
-    {
-		if ((index[i] - 1) != -1) 
-			ans += 'A' + (index[i] - 1);
-		else 
-			ans += 'A' - 20;
-    }
-    return ans;
-}
-//-----------------------------------------------------------------------------//
-//create newick tree from node data
-string tree_to_string(const vector<nodestruct>& v) {
-    vector<string> node_str(v.size(),"");
-    char buffer[16];
-    for(int i=0; i<v.size(); i++) {
-        string temp = "";
-
-        if(v[i].child_1 != -1 && v[i].child_2 != -1) {
-            string convert_node1=id_to_string(v[i].child_1);
-            string convert_node2=id_to_string(v[i].child_2);
-			temp += "(" + node_str[v[i].child_1] + speciesLabel(v[v[i].child_1].type) + convert_node1 + ":";
-            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
-            temp += string(buffer) + "," + node_str[v[i].child_2] + speciesLabel(v[v[i].child_2].type) + convert_node2+ ":";
-            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
-            temp += string(buffer) + ")";
-        }
-        node_str[i] = temp;
-    }
-	string temp = speciesLabel(v.back().type) + id_to_string(v.size() - 1);
-    return node_str.back() + temp + ";";
-}
-//-----------------------------------------------------------------------------//
-string mutationLabels(const vector<nodestruct>& t)			//Function to construct vector of mutation labels for tree, in numerical order
-{
-	string temp = "";
-	for(int i=0; i<t.size(); i++) {
-		temp += t[i].label;
-	}
-	return "[" + temp + "]";
-}
 //-----------------------------------------------------------------------------//
 // random seed generator
 inline unsigned int create_random_seed() {
@@ -141,18 +77,6 @@ inline unsigned int create_random_seed() {
     v^=(v>>13);
     v^=(v<<5);
     return (v == 0) ? 0x6a27d958 : (v & 0x7FFFFFFF); // return at most a 31-bit seed
-}
-
-//-----------------------------------------------------------------------------//
-void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter)
-{   
-    double m = rand_exp(myrand1); //m = total distance travelled along branch length
-    while (m <= time) { //if m < branch length --> mutate
-        ++counter;  //muation counter
-		// use the alias tables to effeciently sample the result of the mutation
-		G = static_cast<char>(mutation[G](myrand1.get_uint64()));
-        m += rand_exp(myrand1);
-    }
 }
 
 //-------------------------------------------------------------------------------------------------//
@@ -368,3 +292,87 @@ void coaltree(vector<int>& activelist, double theta, double time, char type,
 	for(int i=0; i<size && time!=DBL_MAX; i++)
 		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
 }
+
+// Function to convert int type to string
+// Cache labels for reuse
+string id_to_string(int x) {   
+	static vector<string> v;
+	static char buffer[64];
+	for(int xx = (int)v.size(); xx <= x; ++xx) {
+		sprintf(buffer, "%d", xx);
+		v.push_back(buffer);
+	}
+    return v[x];
+}
+
+// TODO: Cache this
+string speciesLabel(int type)			//Function to convert species number to letter format for tree output
+{
+    int x=1;
+    string ans="";
+	int value=1;
+	vector<int> index;
+	if (type > 26) {
+		do {
+			value = type%26;
+			type = type/26;
+			index.push_back(value);
+		} while(type!=0);
+		reverse(index.begin(),index.end());                           //reverses contents of vector
+    }
+	else 
+		index.push_back(type);
+	   
+    for(int i=0; i<index.size(); i++)
+    {
+		if ((index[i] - 1) != -1) 
+			ans += 'A' + (index[i] - 1);
+		else 
+			ans += 'A' - 20;
+    }
+    return ans;
+}
+//-----------------------------------------------------------------------------//
+//create newick tree from node data
+string tree_to_string(const vector<nodestruct>& v) {
+    vector<string> node_str(v.size(),"");
+    char buffer[16];
+    for(int i=0; i<v.size(); i++) {
+        string temp = "";
+
+        if(v[i].child_1 != -1 && v[i].child_2 != -1) {
+            string convert_node1=id_to_string(v[i].child_1);
+            string convert_node2=id_to_string(v[i].child_2);
+			temp += "(" + node_str[v[i].child_1] + speciesLabel(v[v[i].child_1].type) + convert_node1 + ":";
+            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+            temp += string(buffer) + "," + node_str[v[i].child_2] + speciesLabel(v[v[i].child_2].type) + convert_node2+ ":";
+            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
+            temp += string(buffer) + ")";
+        }
+        node_str[i] = temp;
+    }
+	string temp = speciesLabel(v.back().type) + id_to_string(v.size() - 1);
+    return node_str.back() + temp + ";";
+}
+//-----------------------------------------------------------------------------//
+string mutationLabels(const vector<nodestruct>& t)			//Function to construct vector of mutation labels for tree, in numerical order
+{
+	string temp = "";
+	for(int i=0; i<t.size(); i++) {
+		temp += t[i].label;
+	}
+	return "[" + temp + "]";
+}
+
+//-----------------------------------------------------------------------------//
+void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter)
+{   
+    double m = rand_exp(myrand1); //m = total distance travelled along branch length
+    while (m <= time) { //if m < branch length --> mutate
+        ++counter;  //muation counter
+		// use the alias tables to effeciently sample the result of the mutation
+		G = static_cast<char>(mutation[G](myrand1.get_uint64()));
+        m += rand_exp(myrand1);
+    }
+}
+
