@@ -246,10 +246,9 @@ void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double
 	{
         // Draw waiting time until next coalescent event
 		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
-		double U = rand_exp(myrand1, mean);
-		if(T+U>time)
+		T += rand_exp(myrand1, mean);
+		if(T > time)
 			break;
-		T+=U;
 
 		// pick a random pair of nodes
 		random1 = static_cast<int>(size*myrand1.get_double52());
@@ -281,7 +280,7 @@ void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double
 		size--;
 	}
 
-	for(int i=0; i<size && time!=DBL_MAX; i++)
+	for(int i=0; i<size; i++)
 		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
 }
 
