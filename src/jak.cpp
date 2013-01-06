@@ -1,5 +1,15 @@
 // jak.cpp
 
+/* TODO: Create input file format
+reps= 10						
+branches= ((A:0.1,B:0.1):0.7,C:0.5);			//quoted labels and keys or relabel w/ perl
+thetas= ((A:0.5,B:0.5):0.4,C:0.6):0.8;
+A = 10
+B = 5
+C = 5
+seed = 1776
+*/
+
 #ifdef _MSC_VER
 #	include <process.h>
 #	define getpid _getpid
