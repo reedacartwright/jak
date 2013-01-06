@@ -32,8 +32,18 @@ seed = 1776
 
 #include "xorshift64.h"
 #include "rexp.h"
+#include "aliastable.h"
 
 using namespace std;
+
+// Conditional probably of mutation
+double mutation_matrix[4][4] = {
+	{0.25, 0.25, 0.25, 0.25},
+	{0.25, 0.25, 0.25, 0.25},
+	{0.25, 0.25, 0.25, 0.25},
+	{0.25, 0.25, 0.25, 0.25}
+};
+alias_table mutation[4];
 
 // data structure to hold node information
 struct nodestruct {
@@ -45,6 +55,8 @@ struct nodestruct {
     int type; // species/population identifier
 };
 
+void coaltree(vector<int>& activelist, double theta, double time, char type,
+	          vector<nodestruct>& nodeVector, xorshift64& myrand1);
 
 // Function to convert int type to string
 // Cache labels for reuse
@@ -133,87 +145,19 @@ inline unsigned int create_random_seed() {
 
 //-----------------------------------------------------------------------------//
 void set_mutations(xorshift64 &myrand1, char &G, double time, int& counter)
-{   double mutations[4][4]={
-        {0.25,0.50,0.75,1.0},
-        {0.25,0.50,0.75,1.0},
-        {0.25,0.50,0.75,1.0},
-        {0.25,0.50,0.75,1.0}
-    };
+{   
     double m = rand_exp(myrand1); //m = total distance travelled along branch length
     while (m <= time) { //if m < branch length --> mutate
         ++counter;  //muation counter
-        double rand3=myrand1.get_double52();
-        if (rand3<=mutations[G][0])
-            G = 0;
-        else if (rand3<=mutations[G][1])
-            G = 1;
-        else if (rand3<=mutations[G][2])
-            G = 2;
-        else if (rand3<=mutations[G][3])
-            G = 3;
+		// use the alias tables to effeciently sample the result of the mutation
+		G = static_cast<char>(mutation[G](myrand1.get_uint64()));
         m += rand_exp(myrand1);
     }
-}
-//-----------------------------------------------------------------------------------------------//
-void coaltree(vector<int>& activelist, double theta, double time, char type,
-	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
-{
-    double T = 0.0;
-    int i = 0;
-	int random1, random2;
-
-	size_t size = activelist.size();
-
-	while(size>1)
-	{
-        // Draw waiting time until next coalescent event
-		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
-		double U = rand_exp(myrand1, mean);
-		if(T+U>time)
-			break;
-		T+=U;
-
-		// pick a random pair of nodes
-		// TODO: use alias table to optimize this
-		random1 = (myrand1.get_uint32() % size);
-		do {
-			random2 = (myrand1.get_uint32() % size);
-		} while(random1==random2);
-
-		//orders two nodes minimum to maximum
-		if (random1>random2) 
-			swap(random1,random2);
-
-		int newparent = (int)nodeVector.size();
-		nodeVector.push_back(nodestruct());
-		
-		nodeVector[newparent].type = type;
-
-		//update parent node
-		nodeVector[newparent].child_1 = activelist[random1];
-		nodeVector[newparent].child_2 = activelist[random2];
-		nodeVector[newparent].time = T;
-		
-		//update child nodes
-		nodeVector[activelist[random1]].parent = newparent;
-		nodeVector[activelist[random2]].parent = newparent;
-		nodeVector[activelist[random1]].time = T - nodeVector[activelist[random1]].time;
-		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
-
-		//update active vector
-		activelist[random1] = newparent;
-		activelist.erase (activelist.begin() + random2);
-
-		size--;
-	}
-
-	for(int i=0; i<size && time!=DBL_MAX; i++)
-		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
 }
 
 //-------------------------------------------------------------------------------------------------//
 
-int main(int argc, char *argv[])														 //receive inputs
+int main(int argc, char *argv[])
 {
     int N1, N2, n, N, trees;
     double theta1, theta2, theta3, t1, t2;
@@ -298,6 +242,11 @@ int main(int argc, char *argv[])														 //receive inputs
     xorshift64 myrand;
     myrand.seed(create_random_seed());
 
+	// construct alias tables for mutation simulation
+	for(int i=0;i<4;++i) {
+		mutation[i].create(&mutation_matrix[i][0],&mutation_matrix[i][4]);
+	}
+	
     for(int repeat=0; repeat<trees; repeat++) { //loops once for each tree
         vector<nodestruct> nodevector(n); //create nodevector (vector of structs)
 		
@@ -362,4 +311,60 @@ int main(int argc, char *argv[])														 //receive inputs
     cin.ignore( numeric_limits<streamsize>::max(), '\n' );
 #endif
     return EXIT_SUCCESS;
+}
+
+void coaltree(vector<int>& activelist, double theta, double time, char type,
+	          vector<nodestruct>& nodeVector, xorshift64& myrand1)
+{
+    double T = 0.0;
+    int i = 0;
+	int random1, random2;
+
+	size_t size = activelist.size();
+
+	while(size>1)
+	{
+        // Draw waiting time until next coalescent event
+		double mean = (2.0/(size*(size-1.0)))*(theta/2.0);
+		double U = rand_exp(myrand1, mean);
+		if(T+U>time)
+			break;
+		T+=U;
+
+		// pick a random pair of nodes
+		// TODO: use alias table to optimize this
+		random1 = (myrand1.get_uint32() % size);
+		do {
+			random2 = (myrand1.get_uint32() % size);
+		} while(random1==random2);
+
+		//orders two nodes minimum to maximum
+		if (random1>random2) 
+			swap(random1,random2);
+
+		int newparent = (int)nodeVector.size();
+		nodeVector.push_back(nodestruct());
+		
+		nodeVector[newparent].type = type;
+
+		//update parent node
+		nodeVector[newparent].child_1 = activelist[random1];
+		nodeVector[newparent].child_2 = activelist[random2];
+		nodeVector[newparent].time = T;
+		
+		//update child nodes
+		nodeVector[activelist[random1]].parent = newparent;
+		nodeVector[activelist[random2]].parent = newparent;
+		nodeVector[activelist[random1]].time = T - nodeVector[activelist[random1]].time;
+		nodeVector[activelist[random2]].time = T - nodeVector[activelist[random2]].time;
+
+		//update active vector
+		activelist[random1] = newparent;
+		activelist.erase (activelist.begin() + random2);
+
+		size--;
+	}
+
+	for(int i=0; i<size && time!=DBL_MAX; i++)
+		nodeVector[activelist[i]].time = nodeVector[activelist[i]].time - time;
 }
