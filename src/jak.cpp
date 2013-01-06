@@ -306,18 +306,24 @@ string id_to_string(int x) {
 //Function to convert species number to letter format for tree output
 string species_label(int species)
 {
-    // Species of 1 should equal 'A';
-	--species;
-	
-    string ans = "";	
-	while(species > 26) {
-		ans += 'A' + species%26;
-		species /= 26;
+    static vector<string> v;
+	// Species of 1 should equal 'A';
+	species -= 1;
+	if(species < 0)
+		return "%";
+	string ans;
+	for(int xx=(int)v.size(); xx <= species; ++xx) {
+		ans.clear();
+		while(xx > 26) {
+			ans += 'A' + xx%26;
+			xx /= 26;
+		}
+		ans += 'A' + xx%26;
+		reverse(ans.begin(),ans.end());
+		v.push_back(ans);
 	}
-	ans += 'A' + species%26;
-	reverse(ans.begin(),ans.end());
 	
-    return ans;
+    return v[species];
 }
 //-----------------------------------------------------------------------------//
 //create newick tree from node data
@@ -340,7 +346,7 @@ string tree_to_string(const vector<nodestruct>& v) {
         }
         node_str[i] = temp;
     }
-	string temp = species_label(v.back().species) + id_to_string(v.size() - 1);
+	string temp = species_label(v.back().species) + id_to_string((int)v.size() - 1);
     return node_str.back() + temp + ";";
 }
 //-----------------------------------------------------------------------------//
