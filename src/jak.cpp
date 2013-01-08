@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     int N1, N2, n, N, trees;
     double theta1, theta2, theta3, t1, t2;
 
-	species_label(60);
+	species_label(18278);
 
 	//TODO: fix input validation
     if (argc == 9) {
@@ -315,17 +315,28 @@ string species_label(int species)
 	for(int xx=(int)v.size(); xx <= species; ++xx) {
 		ans.clear();
 		zz = xx;
-		while(zz >= 26){
+		
+		if (zz <= 25)
+			ans += 'A' + zz;
+			
+		else {
+			while(zz >= 26){
+			zz = zz - ans.size();
 			ans += 'A' + zz%26;
 			zz /= 26;
 			aa = 1;
-		} 
-		if (aa == 1)
-			zz = zz - 1;
-		ans += 'A' + zz%26;
+			if (zz == 26)
+				break;
+			} 
+			if (aa == 1)
+				zz = zz - 1;
+			ans += 'A' + zz%26;
+		}
+		
 		reverse(ans.begin(),ans.end());
 		v.push_back(ans);
 	}
+	
 	for (int i = 0; i < v.size(); i++) {
 		cout << v[i] << " ";
 		}
