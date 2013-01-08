@@ -29,7 +29,6 @@ seed = 1776
 #include <cmath>
 #include <cfloat>
 #include <fstream>
-#include <stdio.h>
 
 #include "xorshift64.h"
 #include "rexp.h"
@@ -59,6 +58,75 @@ struct nodestruct {
 	               label(0), time(0.0), species(0) { }
 };
 
+<<<<<<< HEAD
+        if(v[i].child_1 != -1 && v[i].child_2 != -1) {
+            string convert_node1=convert(v[i].child_1);
+            string convert_node2=convert(v[i].child_2);
+			cout << " the label for child 1 is: " << speciesLabel(v[v[i].child_1].type) << endl;
+            temp += "(" + node_str[v[i].child_1] + "_" + convert(v[v[i].child_1].type)  + "_"+ convert_node1 + ":";
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_1].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_1].time);
+			cout << " the label for child 2 is: " << speciesLabel(v[v[i].child_2].type) << endl;
+            temp += string(buffer) + "," + node_str[v[i].child_2] + "_" + convert(v[v[i].child_2].type)  + "_" + convert_node2+ ":";
+            //sprintf(buffer, "%0.6f", v[i].time-v[v[i].child_2].time);
+            sprintf(buffer, "%0.6f", v[v[i].child_2].time);
+            temp += string(buffer) + ")";
+        }
+        //temp += v[i].label;
+        node_str[i] = temp;
+    }
+    return node_str.back() + ";";
+}
+*///-----------------------------------------------------------------------------//
+string speciesLabel(int type)
+{
+      
+    //cout<<"type: "<<type<<endl;
+    int x=1;
+    string ans="";
+	int value=1;
+	vector<int> index;
+	if (type > 25) {
+	do
+    {
+        //x = type/26;
+        cout<<"x: " << x <<endl;
+        value = type%26;
+		type = type/26;
+		cout<<"value: "<< value <<endl;
+		//if(value!=0)
+			index.push_back(value);
+		
+		 
+		//type = type-value;
+		cout << "type: " << type << endl;
+	} while(type!=0);
+    reverse(index.begin(),index.end());                           //reverses contents of vector
+    for(int i=0; i < index.size(); i++)
+    {
+		cout << " " << index[i];
+    }
+    cout << endl;
+    }
+	else {
+		index.push_back(type);
+	}
+	   
+    //string letters="0ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for(int i=0; i<index.size(); i++)
+    { 
+			ans += 'A' + index[i];
+    }
+	cout << "ans is: " << ans << endl;
+    return ans;
+}
+//-----------------------------------------------------------------------------//
+string tree_to_string(const vector<nodestruct>& v) {                            //create newick tree from node data
+    vector<string> node_str(v.size(),"");
+    char buffer[16];
+    for(int i=0; i<v.size(); i++) {
+        string temp = "";
+=======
 void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double time, char species,
 	          vector<nodestruct>& nodeVector);
 int set_mutations(xorshift64 &myrand1, char &G, double time);
@@ -67,6 +135,7 @@ string id_to_string(int x);
 string species_label(int type);
 string tree_to_string(const vector<nodestruct>& v);
 string mutation_string(const vector<nodestruct>& t);
+>>>>>>> reedcartwright/master
 
 //-----------------------------------------------------------------------------//
 // random seed generator
@@ -89,8 +158,6 @@ int main(int argc, char *argv[])
 {
     int N1, N2, n, N, trees;
     double theta1, theta2, theta3, t1, t2;
-
-	species_label(18278);
 
 	//TODO: fix input validation
     if (argc == 9) {
@@ -309,38 +376,17 @@ string species_label(int species)
 	if(species < 0)
 		return "%";
 	string ans;
-	int zz = 0;
-	int aa = 0;
-	
 	for(int xx=(int)v.size(); xx <= species; ++xx) {
 		ans.clear();
-		zz = xx;
-		
-		if (zz <= 25)
-			ans += 'A' + zz;
-			
-		else {
-			while(zz >= 26){
-			zz = zz - ans.size();
-			ans += 'A' + zz%26;
-			zz /= 26;
-			aa = 1;
-			if (zz == 26)
-				break;
-			} 
-			if (aa == 1)
-				zz = zz - 1;
-			ans += 'A' + zz%26;
+		while(xx >= 26) {
+			ans += 'A' + xx%26;
+			xx /= 26;
 		}
-		
+		ans += 'A' + xx%26;
 		reverse(ans.begin(),ans.end());
 		v.push_back(ans);
 	}
 	
-	for (int i = 0; i < v.size(); i++) {
-		cout << v[i] << " ";
-		}
-	cout << endl;
     return v[species];
 }
 //-----------------------------------------------------------------------------//
@@ -383,7 +429,7 @@ string mutation_string(const vector<nodestruct>& t)
 int set_mutations(xorshift64 &myrand1, char &G, double time)
 {   
     int counter = 0;
-	double m = rand_exp(myrand1); //m = total distance travelled along branch lengthf
+	double m = rand_exp(myrand1); //m = total distance travelled along branch length
     while (m <= time) { //if m < branch length --> mutate
         ++counter;  //muation counter
 		// use the alias tables to effeciently sample the result of the mutation
