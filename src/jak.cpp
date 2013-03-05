@@ -90,8 +90,6 @@ int main(int argc, char *argv[])
     int N1, N2, n, N, trees;
     double theta1, theta2, theta3, t1, t2;
 
-	species_label(18278);
-
 	//TODO: fix input validation
     if (argc == 9) {
         trees=atoi(argv[1]);
@@ -303,8 +301,9 @@ string id_to_string(int x) {
 //Function to convert species number to letter format for tree output
 string species_label(int species)
 {
-    static vector<string> v;
-	// Species of 1 should equal 'A';
+	// Species numbers start at 1.
+	assert(species >= 1);
+	static vector<string> v;
 	species -= 1;
 	if(species < 0)
 		return "%";
@@ -336,11 +335,6 @@ string species_label(int species)
 		reverse(ans.begin(),ans.end());
 		v.push_back(ans);
 	}
-	
-	for (int i = 0; i < v.size(); i++) {
-		cout << v[i] << " ";
-		}
-	cout << endl;
     return v[species];
 }
 //-----------------------------------------------------------------------------//
