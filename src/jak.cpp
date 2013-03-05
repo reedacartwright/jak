@@ -31,9 +31,15 @@ seed = 1776
 #include <fstream>
 #include <stdio.h>
 
+#include <boost/program_options.hpp>
+
 #include "xorshift64.h"
 #include "rexp.h"
 #include "aliastable.h"
+
+// Utility functions
+#define CERRORR(err_msg) ((std::cerr << "ERROR: " << err_msg << std::endl), false);
+#define CERROR(err_msg) (std::cerr << "ERROR: " << err_msg << std::endl);
 
 using namespace std;
 
@@ -83,85 +89,78 @@ inline unsigned int create_random_seed() {
     return (v == 0) ? 0x6a27d958 : (v & 0x7FFFFFFF); // return at most a 31-bit seed
 }
 
-//-------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------//
+namespace po = boost::program_options;
+
+namespace boost { namespace program_options {
+template<>
+typed_value<bool>* value(bool* v) {
+	return bool_switch(v);
+	//typed_value<bool>* r = new typed_value<bool>(v);
+    //r->default_value(0, "off");
+    //r->implicit_value(1, "on");
+	//return r;
+}
+}}
+
+struct args_t
+{			
+	// use X-Macros to specify argument variables
+#	define XM(lname, sname, desc, type, def) type XV(lname) ;
+#	include "jakargs.xmh"
+#	undef XM
+	po::options_description desc;
+	string runname;
+};
+
+bool process_args(int argc, char* argv[], args_t &a){
+	po::variables_map vm;
+	a.runname = argv[0];
+	a.desc.add_options()
+		#define XM(lname, sname, desc, type, def) ( \
+			XS(lname) IFD(sname, "," BOOST_PP_STRINGIZE sname), \
+			po::value< type >(&a.XV(lname))->default_value(def), \
+			desc )				
+		#include "jakargs.xmh"
+		#undef XM
+	;
+	try {
+		po::store(po::command_line_parser(argc, argv).options(a.desc).run(), vm);
+		po::notify(vm);
+	} catch (std::exception &e) {
+		CERROR(e.what());
+		return CERRORR("unable to process command line");
+	}
+	return true;
+}
+
+//----------------------------------------------------------------------------//
 
 int main(int argc, char *argv[])
 {
-    int N1, N2, n, trees;
-    double theta1, theta2, theta3, t1, t2;
+	int N1, N2, n, trees;
+	double theta1, theta2, theta3, t1, t2;
+	args_t args;
+	if(!process_args(argc, argv, args))
+		return EXIT_FAILURE;
+	if(args.help) {
+		cerr << "Usage:\n  "
+		     << args.runname << " [options]"
+			 << endl << endl;
+		cerr << args.desc << endl;
+		return EXIT_FAILURE;
+	}
+	N1 = args.tips1;
+	N2 = args.tips2;
+	trees = args.reps;
+	theta1 = args.theta1;
+	theta2 = args.theta2;
+	theta3 = args.theta3;
+	t1 = args.t1;
+	t2 = args.t2;
 
-	//TODO: fix input validation
-    if (argc == 9) {
-        trees=atoi(argv[1]);
-		while(trees<1)
-		{	cout<<"Error: Enter number of trees: ";
-			cin>>trees;
-		}
-		N1=atoi(argv[2]);
-		while(N1<1)
-		{	cout<<"Error: Enter number of tips for first species: ";
-			cin>>N1;
-		}
-        N2=atoi(argv[3]);
-		while(N2<1)
-		{	cout<<"Error: Enter number of tips for second species: ";
-			cin>>N1;
-		}
-        theta1=strtod(argv[4], NULL);
-		while(theta1<0.0)
-		{	cout<<"Error: Enter theta1: ";
-			cin>>theta1;
-		}
-        theta2=strtod(argv[5], NULL);
-		while(theta2<0.0)
-		{	cout<<"Error: Enter theta2: ";
-			cin>>theta2;
-		}
-        theta3=strtod(argv[6], NULL);
-		while(theta3<0.0)
-		{	cout<<"Error: Enter theta3: ";
-			cin>>theta3;
-		}
-        t1=strtod(argv[7], NULL);
-		while(t1<0.0)
-		{	cout<<"Error: Enter t1: ";
-			cin>>t1;
-		}
-        t2=strtod(argv[8], NULL);
-		while(t2<0.0)
-		{	cout<<"Error: Enter t2: ";
-			cin>>t2;
-		}
-    }
-    else if (argc == 1) {
-        cout << "Enter number of trees: ";
-        cin >> trees;
-        cout << endl << "Enter the number of tips for first species: ";
-        cin >> N1;                                                                             //receive # of starting nodes (species 1)
-        cout << endl << "Enter number of tips for second species: ";
-        cin >> N2;                                                                             //receive # of starting nodes (species 2)
-        cout << endl << "Enter theta 1: ";
-        cin >> theta1;
-        cout << endl << "Enter theta 2: ";
-        cin >> theta2;
-        cout << endl << "Enter theta 3: ";
-        cin >> theta3;
-        cout << endl << "Enter t1: ";
-        cin >> t1;
-        cout << endl << "Enter t2: ";
-        cin >> t2;
-    } else {
-        cerr << "error, must have format: prg name, trees, # of tips for first"
-                "species, # of tips for second species, theta1, theta2,"
-                "theta3, t1, t2" << endl;
-		cerr << "Press ENTER to quit." << flush;
-		cin.clear();
-		cin.sync();
-		cin.ignore( numeric_limits<streamsize>::max(), '\n' );
-        return EXIT_FAILURE;
-    }
 
-    n = N1+N2; //n=total original tips from both species
+	n = N1+N2; //n=total original tips from both species
 
 	//use xorshift64 class for random number generator
     xorshift64 myrand;
@@ -225,11 +224,10 @@ int main(int argc, char *argv[])
     } //end # of trees loop
 
 #ifndef NDEBUG
-    cerr<<"Random seed used: "<<create_random_seed()<<endl;
-    cerr << "Press ENTER to quit." << flush;
-	cin.clear();
-	cin.sync();
-    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
+//    cerr << "Press ENTER to quit." << flush;
+//	cin.clear();
+//	cin.sync();
+//    cin.ignore( numeric_limits<streamsize>::max(), '\n' );
 #endif
     return EXIT_SUCCESS;
 }

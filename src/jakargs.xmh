@@ -1,0 +1,19 @@
+#include "xm.h"
+
+XM((version),        , "display version information", bool, DL(false, "off"))
+XM((help),           , "display help message", bool, DL(false, "off"))
+
+XM((theta1),    , "theta for population 1", double, 0.001)
+XM((theta2),    , "theta for population 2", double, 0.001)
+XM((theta3),    , "theta for population 3", double, 0.001)
+XM((t1),        , "time for population 1",  double, 0.0)
+XM((t2),        , "time for population 2",  double, 0.0)
+XM((tips1),     , "tips for population 1",  unsigned int, 1)
+XM((tips2),     , "tips for population 2",  unsigned int, 1)
+XM((reps),   (n), "number of replicates",   unsigned int, 1)
+XM((pause),     , "pause on exit",          bool, false)
+XM((seed),      , "random number seed",     unsigned int, 0)
+
+// clean up
+#include "xm.h"
+
