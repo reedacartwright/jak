@@ -73,6 +73,7 @@ string id_to_string(int x);
 string species_label(int type);
 string tree_to_string(const vector<nodestruct>& v);
 string mutation_string(const vector<nodestruct>& t);
+uint64_t key_create(const vector<nodestruct>& temp_nodes);
 
 //-----------------------------------------------------------------------------//
 // random seed generator
@@ -168,7 +169,9 @@ int main(int argc, char *argv[])
     if(seed == 0)
     	seed = create_random_seed();
     myrand.seed(seed);
-
+	
+	cerr << "# Using PRNG seed: " << seed << endl;
+	
 	// construct alias tables for mutation simulation
 	for(int i=0;i<4;++i) {
 		mutation[i].create(&mutation_matrix[i][0],&mutation_matrix[i][4]);
@@ -234,6 +237,37 @@ int main(int argc, char *argv[])
 #endif
     return EXIT_SUCCESS;
 }
+
+// key_create must be used before relabeling
+uint64_t key_create(const vector<nodestruct>& temp_nodes){
+    union key_union{
+        uint64_t key;
+        unsigned char count[8];
+
+    } k;
+
+    k.key = 0;
+
+    for (size_t i = 0; i < temp_nodes.size(); ++i)
+    {
+        if(temp_nodes[i].child_1 == -1 && temp_nodes[i].child_2 == -1) //ensure node is a tip
+        {
+        	assert(temp_nodes[i].label < 4);
+        	switch(temp_nodes[i].species) {
+        	case 1:
+        		k.count[(size_t)temp_nodes[i].label]++;
+        		break;
+        	case 2:
+        		k.count[4+(size_t)temp_nodes[i].label]++;
+        		break;
+        	default:
+        		goto ENDFOR;
+        	}
+        }
+    } 
+	ENDFOR:
+	return k.key;
+} 
 
 void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double time, char species,
 	          vector<nodestruct>& nodeVector)

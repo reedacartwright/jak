@@ -11,6 +11,7 @@ XM((t2),     (v), "time for population 2",  double, 0.0)
 XM((tips1),  (x), "tips for population 1",  unsigned int, 1)
 XM((tips2),  (y), "tips for population 2",  unsigned int, 1)
 XM((reps),   (n), "number of replicates",   unsigned int, 1)
+XM((count)(tips), , "count and output the tip patterns", bool, false)
 XM((pause),     , "pause on exit",          bool, false)
 XM((seed),      , "random number seed",     unsigned int, 0)
 
