@@ -56,7 +56,7 @@ struct nodestruct {
     char label;    // nucleotide
 	
 	nodestruct() : child_1(-1), child_2(-1), parent(-1),
-	               label(0), time(0.0), species(0) { }
+	               time(0.0), species(0), label(0) { }
 };
 
 void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double time, char species,
@@ -87,7 +87,7 @@ inline unsigned int create_random_seed() {
 
 int main(int argc, char *argv[])
 {
-    int N1, N2, n, N, trees;
+    int N1, N2, n, trees;
     double theta1, theta2, theta3, t1, t2;
 
 	//TODO: fix input validation
@@ -213,9 +213,9 @@ int main(int argc, char *argv[])
             set_mutations(myrand, nodevector[i].label, nodevector[i].time);
         }
 		// Label nodes
-        for (int i=0; i < nodevector.size(); i++){
+        for (size_t i=0; i < nodevector.size(); i++){
             char s[] = "ACGT";
-            nodevector[i].label = s[nodevector[i].label];
+            nodevector[i].label = s[(size_t)nodevector[i].label];
         }
 
 //----------------------------------------------------------------------------//
@@ -238,7 +238,6 @@ void coaltree(xorshift64& myrand1, vector<int>& activelist, double theta, double
 	          vector<nodestruct>& nodeVector)
 {
     double T = 0.0;
-    int i = 0;
 	int random1, random2;
 
 	int size = (int)activelist.size();
@@ -342,7 +341,7 @@ string species_label(int species)
 string tree_to_string(const vector<nodestruct>& v) {
     vector<string> node_str(v.size(),"");
     char buffer[16];
-    for(int i=0; i<v.size(); i++) {
+    for(size_t i=0; i<v.size(); i++) {
         string temp = "";
 
         if(v[i].child_1 != -1 && v[i].child_2 != -1) {
@@ -366,7 +365,7 @@ string tree_to_string(const vector<nodestruct>& v) {
 string mutation_string(const vector<nodestruct>& t)
 {
 	string temp = "[";
-	for(int i=0; i<t.size(); i++) {
+	for(size_t i=0; i<t.size(); i++) {
 		temp += t[i].label;
 	}
 	temp += ']';
@@ -381,7 +380,7 @@ int set_mutations(xorshift64 &myrand1, char &G, double time)
     while (m <= time) { //if m < branch length --> mutate
         ++counter;  //muation counter
 		// use the alias tables to effeciently sample the result of the mutation
-		G = static_cast<char>(mutation[G](myrand1.get_uint64()));
+		G = static_cast<char>(mutation[(size_t)G](myrand1.get_uint64()));
         m += rand_exp(myrand1);
     }
 	return counter;
