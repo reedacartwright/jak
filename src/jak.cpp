@@ -164,7 +164,10 @@ int main(int argc, char *argv[])
 
 	//use xorshift64 class for random number generator
     xorshift64 myrand;
-    myrand.seed(create_random_seed());
+    unsigned int seed = args.seed;
+    if(seed == 0)
+    	seed = create_random_seed();
+    myrand.seed(seed);
 
 	// construct alias tables for mutation simulation
 	for(int i=0;i<4;++i) {

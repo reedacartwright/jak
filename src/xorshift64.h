@@ -24,7 +24,9 @@ public:
 	void seed(uint64_t seed1 = 0, uint64_t seed2 = 0) {
 		u = (seed1 == 0) ? UINT64_C(15191868757011070976) : seed1;
 		w = (seed2 == 0) ? UINT64_C(0x61C8864680B583EB) : seed2;
-		get_raw();
+		// Burn in the seed
+		for(int i=0;i<256;++i)
+			get_raw();
 	}
 
 	void seed(std::pair<uint64_t,uint64_t> p) {
