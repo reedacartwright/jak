@@ -29,7 +29,7 @@ seed = 1776
 #include <cmath>
 #include <cfloat>
 #include <fstream>
-#include <stdio.h>
+#include <iomanip>
 
 #include <boost/program_options.hpp>
 
@@ -141,6 +141,8 @@ int main(int argc, char *argv[])
 {
 	int N1, N2, n, trees;
 	double theta1, theta2, theta3, t1, t2;
+	typedef map<uint64_t,size_t> counts_t;
+	counts_t counts;
 	args_t args;
 	if(!process_args(argc, argv, args))
 		return EXIT_FAILURE;
@@ -217,17 +219,34 @@ int main(int argc, char *argv[])
             nodevector[i].label = nodevector[nodevector[i].parent].label;
             set_mutations(myrand, nodevector[i].label, nodevector[i].time);
         }
-		// Label nodes
-        for (size_t i=0; i < nodevector.size(); i++){
-            char s[] = "ACGT";
-            nodevector[i].label = s[(size_t)nodevector[i].label];
+        if(args.count_tips)
+        {
+        	uint64_t u = key_create(nodevector);
+        	// cout << setw(16) << setfill('0') << hex << u << endl;
+        	++counts[u];
+        	
+        } else {
+			// Label nodes
+		    for (size_t i=0; i < nodevector.size(); i++){
+		        char s[] = "ACGT";
+		        nodevector[i].label = s[(size_t)nodevector[i].label];
+		    }
+		    // print newick tree to console
+			cout << mutation_string(nodevector) << "\t";
+		    cout << tree_to_string(nodevector) << endl;      
         }
-
-//----------------------------------------------------------------------------//
-
-		cout << mutation_string(nodevector) << "\t";
-        cout << tree_to_string(nodevector) << endl; //print newick tree to console
+        
     } //end # of trees loop
+    if(args.count_tips) {
+    	cout << "A1\tC1\tG1\tT1\tA2\tC2\tG2\tT2\tCount\n";
+    	for(counts_t::const_iterator it = counts.begin();
+    		it != counts.end(); ++it) {
+    		uint64_t u = it->first;
+    		for(int i=0;i<8;u >>= 8,++i)
+    			cout << (u & 0xFF) << "\t";
+    		cout << it->second << endl;
+    	}
+    }
 
 #ifndef NDEBUG
 //    cerr << "Press ENTER to quit." << flush;
@@ -250,22 +269,23 @@ uint64_t key_create(const vector<nodestruct>& temp_nodes){
 
     for (size_t i = 0; i < temp_nodes.size(); ++i)
     {
-        if(temp_nodes[i].child_1 == -1 && temp_nodes[i].child_2 == -1) //ensure node is a tip
-        {
-        	assert(temp_nodes[i].label < 4);
-        	switch(temp_nodes[i].species) {
-        	case 1:
-        		k.count[(size_t)temp_nodes[i].label]++;
-        		break;
-        	case 2:
-        		k.count[4+(size_t)temp_nodes[i].label]++;
-        		break;
-        	default:
-        		goto ENDFOR;
-        	}
+        assert(temp_nodes[i].label < 4);
+        //ensure node is a tip
+        if(temp_nodes[i].child_1 != -1 || temp_nodes[i].child_2 != -1)
+        	break;
+       	switch(temp_nodes[i].species) {
+       	case 1:
+       		k.count[(size_t)temp_nodes[i].label]++;
+       		break;
+       	case 2:
+       		k.count[4+(size_t)temp_nodes[i].label]++;
+       		break;
+       	default:
+       		// You should never get here.
+       		assert(false);
+       		break;
         }
-    } 
-	ENDFOR:
+    }
 	return k.key;
 } 
 
